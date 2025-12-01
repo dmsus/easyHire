@@ -9,9 +9,11 @@
   "email": "user@example.com",
   "password": "securepassword123"
 }
+```
 
-Response (200):
-json
+**Response (200):**
+
+```json
 
 {
   "access_token": "eyJhbGciOiJSUzI1NiIs...",
