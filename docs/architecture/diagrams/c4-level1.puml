@@ -1,5 +1,5 @@
 @startuml c4_level1
-!includeurl https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
 
 Person(hr, "HR Specialist", "Creates assessments, manages candidates")
 Person(candidate, "Candidate", "Takes technical assessments")

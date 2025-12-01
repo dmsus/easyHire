@@ -1,5 +1,5 @@
 @startuml c4_level3_backend
-!includeurl https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
 
 Container(backend, "Backend API", "Go, Gin", "Handles business logic")
 
