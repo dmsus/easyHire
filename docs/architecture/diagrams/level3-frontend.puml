@@ -1,7 +1,5 @@
-@startuml
-!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
-
-title Component Diagram - Frontend Application
+@startuml c4_level3_frontend
+!includeurl https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
 
 Container(spa, "Single Page Application", "React, TypeScript", "User interface")
 

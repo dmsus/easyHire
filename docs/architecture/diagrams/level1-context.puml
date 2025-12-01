@@ -1,7 +1,5 @@
-@startuml
-!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
-
-title System Context Diagram for EasyHire
+@startuml c4_level1
+!includeurl https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
 
 Person(hr, "HR Specialist", "Creates assessments, manages candidates")
 Person(candidate, "Candidate", "Takes technical assessments")
