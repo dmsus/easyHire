@@ -1,0 +1,40 @@
+@startuml Level3_FrontendComponents
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+title Component Diagram for Frontend Application
+
+Container(spa, "Single Page Application", "React, TypeScript", "User interface for all roles")
+
+Component(hr_dashboard, "HR Dashboard", "React Component", "Assessment creation and candidate management")
+Component(candidate_test, "Candidate Test Interface", "React Component", "Test taking with code editor")
+Component(expert_panel, "Expert Panel", "React Component", "Question review and validation")
+Component(admin_panel, "Admin Panel", "React Component", "System configuration and monitoring")
+Component(auth_flow, "Authentication Flow", "React Component", "Login, registration, password reset")
+Component(results_dashboard, "Results Dashboard", "React Component", "Score visualization and analytics")
+
+Component(api_client, "API Client", "TypeScript Service", "HTTP client for backend communication")
+Component(code_editor, "Code Editor", "Monaco Editor", "Syntax highlighting and code editing")
+Component(state_manager, "State Manager", "Zustand Store", "Global state management")
+Component(router, "Router", "React Router", "Client-side navigation")
+
+Rel(hr_dashboard, api_client, "Fetches assessment data")
+Rel(candidate_test, api_client, "Submits answers")
+Rel(expert_panel, api_client, "Manages questions")
+Rel(admin_panel, api_client, "Configures system")
+Rel(auth_flow, api_client, "Authenticates users")
+Rel(results_dashboard, api_client, "Fetches results")
+
+Rel(candidate_test, code_editor, "Uses for coding tasks")
+Rel(hr_dashboard, state_manager, "Manages state")
+Rel(candidate_test, state_manager, "Manages state")
+Rel(expert_panel, state_manager, "Manages state")
+Rel(admin_panel, state_manager, "Manages state")
+
+Rel(hr_dashboard, router, "Navigates")
+Rel(candidate_test, router, "Navigates")
+Rel(expert_panel, router, "Navigates")
+Rel(admin_panel, router, "Navigates")
+Rel(auth_flow, router, "Navigates")
+Rel(results_dashboard, router, "Navigates")
+
+@enduml

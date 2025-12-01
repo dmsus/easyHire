@@ -1,0 +1,28 @@
+@startuml Level1_SystemContext
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+title System Context Diagram for EasyHire
+
+Person(hr, "HR Specialist", "Creates assessments, manages candidates, views results")
+Person(candidate, "Candidate", "Takes technical assessments, views results")
+Person(tech_expert, "Technical Expert", "Reviews and validates questions, manages competency matrix")
+Person(admin, "System Admin", "Manages users, monitors system, configures settings")
+
+System(easyhire, "EasyHire", "AI-Powered Technical Assessment Platform for Go Developers")
+
+System_Ext(ats, "ATS Systems", "Applicant Tracking Systems (Greenhouse, Lever, etc.)")
+System_Ext(email, "Email Service", "Sends notifications to candidates and HR")
+System_Ext(ai_providers, "AI Providers", "Gemini API, OpenRouter for question generation")
+System_Ext(sso, "SSO Provider", "Google, GitHub, corporate SSO for authentication")
+
+Rel(hr, easyhire, "Uses", "HTTPS")
+Rel(candidate, easyhire, "Takes assessments on", "HTTPS")
+Rel(tech_expert, easyhire, "Manages questions and competencies on", "HTTPS")
+Rel(admin, easyhire, "Administers", "HTTPS")
+
+Rel(easyhire, ats, "Exports candidate data to", "API")
+Rel(easyhire, email, "Sends notifications via", "SMTP/API")
+Rel(easyhire, ai_providers, "Uses for question generation", "HTTPS")
+Rel(easyhire, sso, "Authenticates users via", "OAuth/SAML")
+
+@enduml
