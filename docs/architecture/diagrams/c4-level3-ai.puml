@@ -1,0 +1,28 @@
+@startuml c4_level3_ai
+!includeurl https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+Container(ai_service, "AI Question Service", "Python, FastAPI", "Question generation")
+
+Component(generation_handler, "Generation Handler", "FastAPI Handler", "Handles question generation requests")
+Component(validation_handler, "Validation Handler", "FastAPI Handler", "Validates AI-generated questions")
+Component(rag_engine, "RAG Engine", "Python Service", "Retrieval-Augmented Generation")
+Component(prompt_engine, "Prompt Engine", "Python Service", "Creates optimized prompts")
+
+ContainerDb(vector_db, "Vector Database", "PostgreSQL + pgvector")
+
+Component(embedding_store, "Embedding Store", "pgvector", "Vector embeddings storage")
+
+System_Ext(gemini, "Gemini API", "Google's AI model")
+System_Ext(openrouter, "OpenRouter", "Multiple AI models API")
+
+Rel(generation_handler, rag_engine, "Uses for context")
+Rel(generation_handler, prompt_engine, "Builds prompts")
+Rel(validation_handler, rag_engine, "Validates against existing")
+
+Rel(generation_handler, gemini, "Calls for generation")
+Rel(generation_handler, openrouter, "Fallback calls")
+
+Rel(rag_engine, embedding_store, "Queries vectors")
+Rel(embedding_store, vector_db, "Stored in")
+
+@enduml

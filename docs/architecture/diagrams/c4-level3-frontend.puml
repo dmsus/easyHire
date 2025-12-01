@@ -1,0 +1,33 @@
+@startuml c4_level3_frontend
+!includeurl https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+Container(spa, "Single Page Application", "React, TypeScript", "User interface for all roles")
+
+Component(hr_dashboard, "HR Dashboard", "React Component", "Assessment creation and candidate management")
+Component(candidate_test, "Candidate Test Interface", "React Component", "Test taking with code editor")
+Component(expert_panel, "Expert Panel", "React Component", "Question review and validation")
+Component(admin_console, "Admin Console", "React Component", "System configuration")
+
+Component(api_client, "API Client", "TypeScript Service", "HTTP client for backend communication")
+Component(code_editor, "Code Editor", "Monaco Editor", "Syntax highlighting and code editing")
+Component(state_store, "State Store", "Zustand", "Global state management")
+Component(router, "Router", "React Router", "Client-side navigation")
+
+Rel(hr_dashboard, api_client, "Fetches data")
+Rel(candidate_test, api_client, "Submits answers")
+Rel(expert_panel, api_client, "Manages questions")
+Rel(admin_console, api_client, "Configures system")
+
+Rel(candidate_test, code_editor, "Uses for coding")
+
+Rel(hr_dashboard, state_store, "Manages state")
+Rel(candidate_test, state_store, "Manages state")
+Rel(expert_panel, state_store, "Manages state")
+Rel(admin_console, state_store, "Manages state")
+
+Rel(hr_dashboard, router, "Navigates")
+Rel(candidate_test, router, "Navigates")
+Rel(expert_panel, router, "Navigates")
+Rel(admin_console, router, "Navigates")
+
+@enduml

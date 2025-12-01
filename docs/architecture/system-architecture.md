@@ -5,72 +5,104 @@
 ![C4 Level 1](http://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.githubusercontent.com/dmsus/easyHire/main/docs/architecture/diagrams/c4-level1.puml)
 
 **Description:**
-- **HR Specialists** create and manage technical assessments
-- **Candidates** take Go programming assessments via web interface
-- **Technical Experts** review and validate AI-generated questions
-- **Admins** configure system settings and monitor performance
-- **EasyHire Platform** coordinates assessment lifecycle with AI integration
-- **External Systems** provide AI services, email notifications, and ATS integration
+EasyHire connects HR specialists, candidates, technical experts, and administrators with AI-powered assessment platform.
 
 ## Level 2: Container Diagram
 
 ![C4 Level 2](http://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.githubusercontent.com/dmsus/easyHire/main/docs/architecture/diagrams/c4-level2.puml)
 
-**Description:**
-- **React SPA**: TypeScript frontend with role-based interfaces
-- **Go Backend API**: RESTful service with Fibonacci scoring engine
-- **AI Question Service**: Python service for RAG-based question generation
+**Containers:**
+- **React SPA**: User interface for all roles
+- **Go Backend API**: Core business logic and assessment management
+- **AI Question Service**: Generates questions using AI models
 - **PostgreSQL + pgvector**: Primary database with vector embeddings
-- **Code Execution Service**: Docker-based secure Go code runner
-- **Redis**: Session management and caching layer
-- **External Dependencies**: AI providers, email services, SSO providers
+- **Code Execution Service**: Secure Docker containers for Go code execution
+- **Redis**: Caching and session management
 
-## Level 3: Component Diagram (Backend API)
+## Level 3: Component Diagrams
 
+### Backend API Components
 ![C4 Level 3 Backend](http://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.githubusercontent.com/dmsus/easyHire/main/docs/architecture/diagrams/c4-level3-backend.puml)
 
-**Description:**
-- **Authentication Handler**: JWT-based authentication with RBAC
-- **Assessment Handler**: Manages assessment lifecycle and candidate flow
-- **Question Handler**: Question bank management and AI integration
-- **Scoring Engine**: Fibonacci-based competency scoring (weights: 1,2,3,5)
-- **Code Execution Client**: Secure Docker communication for code evaluation
-- **Repository Layer**: GORM-based data access objects for PostgreSQL
-- **External Components**: AI Service for question generation, Code Executor for safe execution
+**Components:**
+- Authentication Handler
+- Assessment Handler  
+- Question Handler
+- Scoring Engine
+- Code Execution Client
+- Data repositories for users, assessments, questions, results
 
-## Technology Stack
+### Frontend Application Components
+![C4 Level 3 Frontend](http://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.githubusercontent.com/dmsus/easyHire/main/docs/architecture/diagrams/c4-level3-frontend.puml)
+
+**Components:**
+- HR Dashboard
+- Candidate Test Interface
+- Expert Panel
+- Admin Console
+- API Client, Code Editor, State Store, Router
+
+### AI Service Components
+![C4 Level 3 AI](http://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.githubusercontent.com/dmsus/easyHire/main/docs/architecture/diagrams/c4-level3-ai.puml)
+
+**Components:**
+- Generation Handler
+- Validation Handler
+- RAG Engine
+- Prompt Engine
+- Vector database integration
+
+## Technology Stack Decisions
 
 ### Frontend
-- **React 18 + TypeScript**: Type-safe UI development
-- **Vite**: Fast build tool with hot module replacement
-- **Tailwind CSS**: Utility-first CSS framework
-- **Monaco Editor**: VS Code-based code editor for assessments
-- **Zustand**: Lightweight state management
-- **React Router v6**: Client-side routing
+- **React 18 + TypeScript**: Type safety for complex assessment UI
+- **Vite**: Fast development and optimized production builds
+- **Tailwind CSS**: Rapid UI development with consistent design
+- **Monaco Editor**: Industry-standard code editing experience
+- **Zustand**: Simple state management without boilerplate
+- **React Router v6**: Declarative routing with nested routes
 
 ### Backend
-- **Go 1.21**: High-performance, concurrent backend
-- **Gin Framework**: Minimalist HTTP web framework
-- **GORM**: ORM with struct-first approach
-- **PostgreSQL 14**: Relational database with JSON support
-- **Redis 7**: Caching and session storage
-- **JWT (RS256)**: Secure token-based authentication
+- **Go 1.21**: Native Go execution, excellent performance for concurrent assessments
+- **Gin Framework**: Minimalist HTTP framework with middleware support
+- **GORM**: ORM with struct-first approach and migrations
+- **PostgreSQL 14**: Relational database with JSON and vector extensions
+- **Redis**: Low-latency caching for sessions and assessment data
+- **JWT (RS256)**: Secure token-based authentication with asymmetric encryption
 
 ### AI Service
-- **Python 3.11 + FastAPI**: AI service framework with async support
-- **Gemini API**: Google's AI model for question generation
-- **OpenRouter**: Fallback for open-source models (Llama, Mistral)
-- **pgvector**: PostgreSQL extension for vector similarity search
+- **Python 3.11 + FastAPI**: Rich ML ecosystem and async capabilities
+- **Gemini API**: High-quality question generation (free tier available)
+- **OpenRouter**: Fallback to open-source models (Llama, Mistral)
+- **pgvector**: Vector similarity search within PostgreSQL
+- **Sentence Transformers**: For generating text embeddings
 
 ### Infrastructure
-- **Docker**: Containerization for services
-- **Kubernetes**: Production orchestration and auto-scaling
-- **Nginx**: Reverse proxy and load balancing
-- **Prometheus + Grafana**: Monitoring and observability stack
+- **Docker**: Containerization for consistent environments
+- **Kubernetes**: Orchestration for scalability and resilience
+- **Nginx**: Reverse proxy, load balancing, SSL termination
+- **Prometheus + Grafana**: Metrics collection and visualization
 
-## Communication Patterns
-- Frontend ↔ Backend: REST API over HTTPS (JSON)
-- Backend ↔ AI Service: gRPC/HTTP for question generation
-- Backend ↔ Database: SQL with connection pooling
-- Backend ↔ Code Executor: HTTP with timeout and resource limits
-- Backend ↔ Redis: Redis protocol for caching and sessions
+## API Contracts & Data Flow
+
+### Primary Data Flows
+1. **Assessment Creation**: HR → Frontend → Backend → AI Service → Database
+2. **Candidate Testing**: Candidate → Frontend → Backend → Code Execution → Results
+3. **Question Generation**: Backend → AI Service → Vector DB → External AI → Database
+
+### Key API Endpoints
+
+POST /api/v1/assessments # Create assessment
+GET /api/v1/assessments/{id} # Get assessment
+POST /api/v1/questions/generate # Generate AI questions
+POST /api/v1/execute # Execute code
+GET /api/v1/results/{id} # Get assessment results
+text
+
+
+### Communication Patterns
+- **Frontend ↔ Backend**: REST over HTTPS with JWT authentication
+- **Backend ↔ AI Service**: gRPC/HTTP for low-latency question generation
+- **Backend ↔ Database**: Connection-pooled SQL queries
+- **Backend ↔ Code Execution**: HTTP with strict timeouts and resource limits
+- **Backend ↔ Redis**: Redis protocol for caching and session storage
