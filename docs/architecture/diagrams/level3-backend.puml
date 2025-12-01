@@ -1,0 +1,34 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+title Component Diagram - Backend API
+
+Container(backend, "Backend API", "Go, Gin", "Handles business logic")
+
+Component(auth_handler, "Authentication Handler", "Gin Handler", "User authentication and JWT management")
+Component(assessment_handler, "Assessment Handler", "Gin Handler", "Creates and manages assessments")
+Component(question_handler, "Question Handler", "Gin Handler", "Manages question bank")
+Component(scoring_engine, "Scoring Engine", "Go Service", "Calculates Fibonacci-based scores")
+Component(code_execution_client, "Code Execution Client", "Go Client", "Communicates with execution service")
+
+ContainerDb(db, "Database", "PostgreSQL")
+
+Component(user_repository, "User Repository", "GORM", "User data access")
+Component(assessment_repository, "Assessment Repository", "GORM", "Assessment data access")
+Component(question_repository, "Question Repository", "GORM", "Question data access")
+Component(result_repository, "Result Repository", "GORM", "Result data access")
+
+Rel(auth_handler, user_repository, "Uses")
+Rel(assessment_handler, assessment_repository, "Uses")
+Rel(question_handler, question_repository, "Uses")
+Rel(scoring_engine, result_repository, "Uses")
+
+Rel(assessment_handler, scoring_engine, "Calls for scoring")
+Rel(assessment_handler, code_execution_client, "Submits code")
+
+Rel(user_repository, db, "SQL")
+Rel(assessment_repository, db, "SQL")
+Rel(question_repository, db, "SQL")
+Rel(result_repository, db, "SQL")
+
+@enduml

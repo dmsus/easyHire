@@ -1,26 +1,30 @@
-@startuml Level2_Containers
+@startuml
 !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
 
 title Container Diagram for EasyHire
 
-Person(hr, "HR Specialist", "Creates assessments, manages candidates, views results")
-Person(candidate, "Candidate", "Takes technical assessments, views results")
-Person(tech_expert, "Technical Expert", "Reviews and validates questions, manages competency matrix")
-Person(admin, "System Admin", "Manages users, monitors system, configures settings")
+Person(hr, "HR Specialist")
+Person(candidate, "Candidate")
+Person(tech_expert, "Technical Expert")
+Person(admin, "System Admin")
 
 System_Boundary(easyhire, "EasyHire Platform") {
-    Container(spa, "Single Page Application", "React, TypeScript, Tailwind CSS", "Provides user interface for all roles")
-    Container(backend, "Backend API", "Go 1.21, Gin, GORM", "Business logic, assessment management, scoring")
-    Container(ai_service, "AI Question Service", "Python, FastAPI", "Generates and validates questions using AI")
-    Container(db, "Database", "PostgreSQL 14", "Stores users, assessments, questions, results")
-    Container(code_executor, "Code Execution Service", "Go, Docker SDK", "Executes candidate code in isolated containers")
-    Container(redis, "Cache & Session Store", "Redis", "Caching, rate limiting, session management")
+    Container(spa, "Single Page Application", "React + TypeScript", "Provides user interface for all roles")
+    
+    Container(backend, "Backend API", "Go + Gin", "Handles business logic and assessment management")
+    
+    Container(ai_service, "AI Question Service", "Python + FastAPI", "Generates and validates questions using AI")
+    
+    ContainerDb(db, "Database", "PostgreSQL + pgvector", "Stores users, assessments, questions, results")
+    
+    Container(code_executor, "Code Execution Service", "Go + Docker", "Executes candidate code in secure containers")
+    
+    Container(redis, "Cache", "Redis", "Session management and caching")
 }
 
-System_Ext(ats, "ATS Systems", "Applicant Tracking Systems")
-System_Ext(email, "Email Service", "Sends notifications")
-System_Ext(ai_providers, "AI Providers", "Gemini API, OpenRouter")
-System_Ext(sso, "SSO Provider", "Google, GitHub, corporate SSO")
+System_Ext(ai_providers, "AI Providers", "Gemini, OpenRouter")
+System_Ext(email, "Email Service", "SendGrid")
+System_Ext(ats, "ATS Systems", "Greenhouse")
 
 Rel(hr, spa, "Uses", "HTTPS")
 Rel(candidate, spa, "Uses", "HTTPS")
@@ -28,13 +32,13 @@ Rel(tech_expert, spa, "Uses", "HTTPS")
 Rel(admin, spa, "Uses", "HTTPS")
 
 Rel(spa, backend, "API calls", "REST/HTTPS")
-Rel(backend, db, "Reads from and writes to", "SQL")
+Rel(backend, db, "Reads/writes data", "SQL")
 Rel(backend, ai_service, "Requests question generation", "gRPC/HTTP")
 Rel(backend, code_executor, "Submits code for execution", "HTTP")
-Rel(backend, redis, "Caches data and sessions", "Redis protocol")
-Rel(ai_service, ai_providers, "Calls for AI generation", "HTTPS")
+Rel(backend, redis, "Caches data", "Redis protocol")
+
+Rel(ai_service, ai_providers, "Calls AI models", "HTTPS")
 Rel(backend, email, "Sends emails", "SMTP/API")
 Rel(backend, ats, "Exports data", "API")
-Rel(backend, sso, "Validates authentication", "OAuth/SAML")
 
 @enduml
