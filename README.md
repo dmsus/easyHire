@@ -37,7 +37,7 @@
 ## 🏗️ System Architecture (C4 Model)
 
 ### 📊 High-Level Overview
-
+```text
 ┌─────────────────────────────────────────────────────────────┐
 │ EasyHire Platform │
 ├─────────────┬─────────────┬────────────────┬───────────────┤
@@ -47,7 +47,7 @@
 │ Redis │ Code │ External │ Email/ATS │
 │ Cache │ Executor │ AI Providers │ Integration │
 └─────────────┴─────────────┴────────────────┴───────────────┘
-
+```
 
 
 ### 🔗 External Integrations
@@ -64,7 +64,7 @@
 - **Total Documentation**: 40 files created
 
 ### 📁 Key Documentation Files
-
+```text
 docs/
 ├── 📖 analysis/ # Requirements analysis
 │ ├── user-stories.md # 16 user stories for all roles
@@ -81,7 +81,7 @@ docs/
 │ ├── paths/ # 14 endpoint definitions
 │ └── examples/ # Request/response examples
 └── 📈 project-status.md # Current project status
-
+```
 
 
 ## 🛠️ Technology Stack
