@@ -1,0 +1,56 @@
+Candidate:
+  type: object
+  required:
+    - id
+    - email
+    - created_at
+  properties:
+    id:
+      type: string
+      format: uuid
+      example: "123e4567-e89b-12d3-a456-426614174002"
+    email:
+      type: string
+      format: email
+      example: "candidate@example.com"
+    first_name:
+      type: string
+      nullable: true
+    last_name:
+      type: string
+      nullable: true
+    phone:
+      type: string
+      nullable: true
+    status:
+      type: string
+      enum:
+        - active
+        - invited
+        - completed
+        - archived
+      default: "active"
+    invited_at:
+      type: string
+      format: date-time
+      nullable: true
+    completed_assessments_count:
+      type: integer
+      default: 0
+    average_score:
+      type: number
+      nullable: true
+    last_assessment_at:
+      type: string
+      format: date-time
+      nullable: true
+    metadata:
+      type: object
+      additionalProperties: true
+    created_at:
+      type: string
+      format: date-time
+    updated_at:
+      type: string
+      format: date-time
+      nullable: true

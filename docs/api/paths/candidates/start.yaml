@@ -1,0 +1,60 @@
+post:
+  summary: Start assessment
+  description: Candidate starts a specific assessment
+  tags:
+    - Candidates
+  security:
+    - bearerAuth: []
+  parameters:
+    - $ref: '#/components/parameters/candidateIdParam'
+    - name: assessmentId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Assessment ID
+  responses:
+    '200':
+      description: Assessment started successfully
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              assessment_id:
+                type: string
+                format: uuid
+              started_at:
+                type: string
+                format: date-time
+              expires_at:
+                type: string
+                format: date-time
+              questions:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Question'
+    '400':
+      description: Cannot start assessment
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            already_started:
+              value:
+                error: true
+                code: "ASSESSMENT_ALREADY_STARTED"
+                message: "Assessment has already been started"
+            expired:
+              value:
+                error: true
+                code: "ASSESSMENT_EXPIRED"
+                message: "Assessment invitation has expired"
+    '401':
+      $ref: '#/components/responses/UnauthorizedError'
+    '403':
+      $ref: '#/components/responses/ForbiddenError'
+    '404':
+      $ref: '#/components/responses/NotFoundError'

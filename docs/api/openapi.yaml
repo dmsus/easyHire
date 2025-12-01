@@ -1,0 +1,213 @@
+openapi: 3.0.0
+info:
+  title: EasyHire API
+  version: 1.0.0
+  description: AI-Powered Technical Assessment Platform for Go Developers
+  contact:
+    name: EasyHire Team
+    email: support@easyhire.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.easyhire.com/v1
+    description: Production server
+  - url: https://staging.api.easyhire.com/v1
+    description: Staging server
+  - url: http://localhost:8080/v1
+    description: Local development
+
+tags:
+  - name: Authentication
+    description: User authentication and authorization
+  - name: Assessments
+    description: Assessment creation and management
+  - name: Candidates
+    description: Candidate test-taking operations
+  - name: Questions
+    description: Question bank and AI generation
+  - name: Execution
+    description: Code execution and evaluation
+  - name: Results
+    description: Assessment results and analytics
+  - name: Webhooks
+    description: Asynchronous event notifications
+
+paths:
+  # Authentication endpoints
+  /auth/login:
+    $ref: './paths/auth/login.yaml'
+  /auth/refresh:
+    $ref: './paths/auth/refresh.yaml'
+  /auth/logout:
+    $ref: './paths/auth/logout.yaml'
+  
+  # Assessment endpoints
+  /assessments:
+    $ref: './paths/assessments/collection.yaml'
+  /assessments/{id}:
+    $ref: './paths/assessments/single.yaml'
+  /assessments/{id}/invite:
+    $ref: './paths/assessments/invite.yaml'
+  /assessments/{id}/candidates:
+    $ref: './paths/assessments/candidates.yaml'
+  
+  # Candidate endpoints
+  /candidates/{id}/assessments:
+    $ref: './paths/candidates/assessments.yaml'
+  /candidates/{id}/assessments/{assessmentId}/start:
+    $ref: './paths/candidates/start.yaml'
+  /candidates/{id}/assessments/{assessmentId}/submit:
+    $ref: './paths/candidates/submit.yaml'
+  
+  # Question endpoints
+  /questions:
+    $ref: './paths/questions/collection.yaml'
+  /questions/generate:
+    $ref: './paths/questions/generate.yaml'
+  /questions/{id}/validate:
+    $ref: './paths/questions/validate.yaml'
+  
+  # Execution endpoints
+  /execute:
+    $ref: './paths/execute/execute.yaml'
+  /execute/test:
+    $ref: './paths/execute/test.yaml'
+  
+  # Results endpoints
+  /results/{id}:
+    $ref: './paths/results/single.yaml'
+  /results/{id}/breakdown:
+    $ref: './paths/results/breakdown.yaml'
+  /results/{id}/pdf:
+    $ref: './paths/results/pdf.yaml'
+  
+  # Webhook endpoints
+  /webhooks:
+    $ref: './paths/webhooks/collection.yaml'
+  /webhooks/{id}/test:
+    $ref: './paths/webhooks/test.yaml'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    apiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+    oauth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://auth.easyhire.com/oauth2/auth
+          tokenUrl: https://auth.easyhire.com/oauth2/token
+          scopes:
+            assessments:read: Read assessments
+            assessments:write: Create and update assessments
+            candidates:read: Read candidate information
+            candidates:write: Manage candidates
+            questions:read: Read questions
+            questions:write: Generate and validate questions
+            results:read: Read results
+            admin:all: Full administrative access
+  
+  schemas:
+    Assessment:
+      $ref: './schemas/assessment.yaml'
+    Question:
+      $ref: './schemas/question.yaml'
+    Candidate:
+      $ref: './schemas/candidate.yaml'
+    Result:
+      $ref: './schemas/result.yaml'
+    Error:
+      $ref: './schemas/error.yaml'
+  
+  parameters:
+    pageParam:
+      name: page
+      in: query
+      description: Page number
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    limitParam:
+      name: limit
+      in: query
+      description: Items per page
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+    assessmentIdParam:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Assessment ID
+    candidateIdParam:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Candidate ID
+  
+  responses:
+    UnauthorizedError:
+      description: Authentication credentials were missing or invalid
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: true
+            code: "UNAUTHORIZED"
+            message: "Authentication required"
+            details: "Bearer token is missing or invalid"
+    ForbiddenError:
+      description: User does not have permission to access this resource
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: true
+            code: "FORBIDDEN"
+            message: "Insufficient permissions"
+            details: "Role 'candidate' cannot access HR resources"
+    NotFoundError:
+      description: The requested resource was not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: true
+            code: "NOT_FOUND"
+            message: "Resource not found"
+            details: "Assessment with ID '123e4567-e89b-12d3-a456-426614174000' does not exist"
+    ValidationError:
+      description: Request validation failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: true
+            code: "VALIDATION_ERROR"
+            message: "Invalid request parameters"
+            details:
+              field: "difficulty_level"
+              error: "Must be one of: junior, middle, senior, expert"

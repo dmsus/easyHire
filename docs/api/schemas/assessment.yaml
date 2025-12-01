@@ -1,0 +1,75 @@
+Assessment:
+  type: object
+  required:
+    - id
+    - title
+    - status
+    - created_at
+  properties:
+    id:
+      type: string
+      format: uuid
+      example: "123e4567-e89b-12d3-a456-426614174000"
+    title:
+      type: string
+      example: "Senior Go Developer Assessment"
+    description:
+      type: string
+      nullable: true
+    status:
+      type: string
+      enum:
+        - draft
+        - published
+        - active
+        - completed
+        - archived
+    created_by:
+      type: string
+      format: uuid
+    role:
+      type: string
+      enum:
+        - backend_developer
+        - fullstack_developer
+        - devops_engineer
+        - team_lead
+    target_level:
+      type: string
+      enum:
+        - junior
+        - middle
+        - senior
+        - expert
+    competency_weights:
+      type: object
+      additionalProperties:
+        type: number
+    level_distribution:
+      type: object
+      additionalProperties:
+        type: integer
+    time_limit_minutes:
+      type: integer
+      minimum: 1
+    question_count:
+      type: integer
+      minimum: 1
+    passing_score:
+      type: number
+      minimum: 0
+      maximum: 100
+    metadata:
+      type: object
+      additionalProperties: true
+    created_at:
+      type: string
+      format: date-time
+    updated_at:
+      type: string
+      format: date-time
+      nullable: true
+    published_at:
+      type: string
+      format: date-time
+      nullable: true

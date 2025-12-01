@@ -1,0 +1,61 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "/v1/execute",
+    "headers": {
+      "Authorization": "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...",
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "language": "go",
+      "code": "package main\n\nimport (\n    \"fmt\"\n)\n\nfunc fibonacci(n int) int {\n    if n <= 1 {\n        return n\n    }\n    return fibonacci(n-1) + fibonacci(n-2)\n}\n\nfunc main() {\n    fmt.Println(fibonacci(10))\n}",
+      "test_cases": [
+        {
+          "input": "n=0",
+          "expected_output": "0"
+        },
+        {
+          "input": "n=1",
+          "expected_output": "1"
+        },
+        {
+          "input": "n=10",
+          "expected_output": "55"
+        }
+      ],
+      "timeout_seconds": 10,
+      "memory_limit_mb": 256,
+      "environment": {
+        "go_version": "1.21",
+        "modules": ["github.com/stretchr/testify"]
+      }
+    }
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "execution_id": "exec_7890123456",
+      "status": "completed",
+      "result": {
+        "passed_tests": 3,
+        "failed_tests": 0,
+        "total_tests": 3,
+        "score": 100,
+        "output": "55\n",
+        "error": null,
+        "execution_time_ms": 45,
+        "memory_used_mb": 12
+      },
+      "feedback": [
+        {
+          "type": "performance",
+          "message": "Consider using memoization for better performance on larger inputs",
+          "severity": "info"
+        }
+      ]
+    }
+  }
+}

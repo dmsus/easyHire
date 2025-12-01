@@ -1,0 +1,12 @@
+post:
+  summary: Logout user
+  description: Invalidate current access and refresh tokens
+  tags:
+    - Authentication
+  security:
+    - bearerAuth: []
+  responses:
+    '204':
+      description: Logout successful, tokens invalidated
+    '401':
+      $ref: '#/components/responses/UnauthorizedError'

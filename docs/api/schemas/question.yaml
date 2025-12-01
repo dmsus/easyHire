@@ -1,0 +1,95 @@
+Question:
+  type: object
+  required:
+    - id
+    - type
+    - competency
+    - level
+    - content
+    - created_at
+  properties:
+    id:
+      type: string
+      format: uuid
+      example: "123e4567-e89b-12d3-a456-426614174001"
+    type:
+      type: string
+      enum:
+        - multiple_choice
+        - coding
+        - architecture
+        - debugging
+    competency:
+      type: string
+      example: "concurrency"
+    level:
+      type: string
+      enum:
+        - junior
+        - middle
+        - senior
+        - expert
+    content:
+      type: object
+      properties:
+        text:
+          type: string
+        code_snippet:
+          type: string
+          nullable: true
+        options:
+          type: array
+          items:
+            type: string
+          nullable: true
+    test_cases:
+      type: array
+      items:
+        type: object
+        properties:
+          input:
+            type: string
+          expected_output:
+            type: string
+          hidden:
+            type: boolean
+            default: false
+    solution:
+      type: object
+      nullable: true
+      properties:
+        code:
+          type: string
+        explanation:
+          type: string
+    explanation:
+      type: string
+      nullable: true
+    ai_generated:
+      type: boolean
+      default: false
+    validation_status:
+      type: string
+      enum:
+        - pending
+        - approved
+        - rejected
+        - needs_review
+    metadata:
+      type: object
+      additionalProperties: true
+    created_at:
+      type: string
+      format: date-time
+    updated_at:
+      type: string
+      format: date-time
+      nullable: true
+    validated_by:
+      type: string
+      format: uuid
+      nullable: true
+    validated_at:
+      type: string
+      format: date-time
+      nullable: true

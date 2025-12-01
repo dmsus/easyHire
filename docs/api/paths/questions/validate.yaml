@@ -1,0 +1,56 @@
+post:
+  summary: Validate AI-generated question
+  description: Technical expert validates or rejects AI-generated question
+  tags:
+    - Questions
+  security:
+    - bearerAuth: []
+    - oauth2: [questions:write]
+  parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Question ID
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          required:
+            - action
+          properties:
+            action:
+              type: string
+              enum: [approve, reject, needs_review]
+            feedback:
+              type: string
+              nullable: true
+            corrections:
+              type: object
+              nullable: true
+              properties:
+                content:
+                  type: object
+                test_cases:
+                  type: array
+                solution:
+                  type: object
+  responses:
+    '200':
+      description: Question validation processed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Question'
+    '400':
+      $ref: '#/components/responses/ValidationError'
+    '401':
+      $ref: '#/components/responses/UnauthorizedError'
+    '403':
+      $ref: '#/components/responses/ForbiddenError'
+    '404':
+      $ref: '#/components/responses/NotFoundError'

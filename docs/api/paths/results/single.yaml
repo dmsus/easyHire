@@ -1,0 +1,28 @@
+get:
+  summary: Get result by ID
+  description: Get detailed assessment result
+  tags:
+    - Results
+  security:
+    - bearerAuth: []
+  parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Result ID
+  responses:
+    '200':
+      description: Result details
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Result'
+    '401':
+      $ref: '#/components/responses/UnauthorizedError'
+    '403':
+      $ref: '#/components/responses/ForbiddenError'
+    '404':
+      $ref: '#/components/responses/NotFoundError'

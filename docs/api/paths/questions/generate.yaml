@@ -1,0 +1,79 @@
+post:
+  summary: Generate AI questions
+  description: Generate questions using AI based on competencies and levels
+  tags:
+    - Questions
+  security:
+    - bearerAuth: []
+    - oauth2: [questions:write]
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          required:
+            - competencies
+          properties:
+            competencies:
+              type: array
+              items:
+                type: object
+                required:
+                  - name
+                  - level
+                properties:
+                  name:
+                    type: string
+                  level:
+                    type: string
+                    enum: [junior, middle, senior, expert]
+                  count:
+                    type: integer
+                    minimum: 1
+                    maximum: 10
+                    default: 1
+            question_types:
+              type: array
+              items:
+                type: string
+                enum: [multiple_choice, coding, architecture, debugging]
+              default: ["multiple_choice", "coding"]
+            model:
+              type: string
+              enum: [gemini, openrouter_llama, openrouter_mistral]
+              default: "gemini"
+            context:
+              type: string
+              nullable: true
+              description: Additional context for question generation
+  responses:
+    '202':
+      description: Question generation started
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              job_id:
+                type: string
+              estimated_time:
+                type: integer
+              message:
+                type: string
+    '400':
+      $ref: '#/components/responses/ValidationError'
+    '401':
+      $ref: '#/components/responses/UnauthorizedError'
+    '403':
+      $ref: '#/components/responses/ForbiddenError'
+    '503':
+      description: AI service unavailable
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: true
+            code: "AI_SERVICE_UNAVAILABLE"
+            message: "AI question generation service is currently unavailable"

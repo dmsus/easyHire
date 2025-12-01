@@ -1,0 +1,61 @@
+get:
+  summary: List candidates for assessment
+  description: Get list of candidates invited to an assessment with their status
+  tags:
+    - Assessments
+  security:
+    - bearerAuth: []
+  parameters:
+    - $ref: '#/components/parameters/assessmentIdParam'
+    - $ref: '#/components/parameters/pageParam'
+    - $ref: '#/components/parameters/limitParam'
+    - name: status
+      in: query
+      schema:
+        type: string
+        enum: [invited, started, completed, expired]
+      required: false
+  responses:
+    '200':
+      description: List of candidates
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              data:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    candidate_id:
+                      type: string
+                      format: uuid
+                    email:
+                      type: string
+                    name:
+                      type: string
+                    status:
+                      type: string
+                    invited_at:
+                      type: string
+                      format: date-time
+                    started_at:
+                      type: string
+                      format: date-time
+                      nullable: true
+                    completed_at:
+                      type: string
+                      format: date-time
+                      nullable: true
+                    score:
+                      type: number
+                      nullable: true
+              pagination:
+                type: object
+    '401':
+      $ref: '#/components/responses/UnauthorizedError'
+    '403':
+      $ref: '#/components/responses/ForbiddenError'
+    '404':
+      $ref: '#/components/responses/NotFoundError'

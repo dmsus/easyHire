@@ -1,0 +1,66 @@
+get:
+  summary: Get competency breakdown
+  description: Get detailed competency breakdown for a result
+  tags:
+    - Results
+  security:
+    - bearerAuth: []
+  parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Result ID
+  responses:
+    '200':
+      description: Competency breakdown
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              result_id:
+                type: string
+                format: uuid
+              competency_scores:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    competency:
+                      type: string
+                    score:
+                      type: number
+                    level:
+                      type: string
+                    weight:
+                      type: number
+                    fibonacci_score:
+                      type: number
+              strengths:
+                type: array
+                items:
+                  type: string
+              areas_for_improvement:
+                type: array
+                items:
+                  type: string
+              recommendations:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    competency:
+                      type: string
+                    resources:
+                      type: array
+                      items:
+                        type: string
+    '401':
+      $ref: '#/components/responses/UnauthorizedError'
+    '403':
+      $ref: '#/components/responses/ForbiddenError'
+    '404':
+      $ref: '#/components/responses/NotFoundError'

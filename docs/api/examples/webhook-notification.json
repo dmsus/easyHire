@@ -1,0 +1,35 @@
+{
+  "description": "Example webhook notification for candidate.completed event",
+  "event": {
+    "headers": {
+      "X-EasyHire-Event": "candidate.completed",
+      "X-EasyHire-Delivery": "delivery_123456789",
+      "X-EasyHire-Signature": "sha256=...",
+      "X-EasyHire-Timestamp": "2024-01-15T10:30:00Z",
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "event": "candidate.completed",
+      "data": {
+        "assessment_id": "123e4567-e89b-12d3-a456-426614174000",
+        "assessment_title": "Senior Go Developer Assessment",
+        "candidate_id": "123e4567-e89b-12d3-a456-426614174001",
+        "candidate_email": "candidate@example.com",
+        "score": 78.5,
+        "fibonacci_score": 55,
+        "level": "senior",
+        "passed": true,
+        "time_spent_minutes": 85,
+        "started_at": "2024-01-15T09:00:00Z",
+        "completed_at": "2024-01-15T10:25:00Z"
+      },
+      "webhook_id": "wh_123456789",
+      "timestamp": "2024-01-15T10:30:00Z",
+      "signature": "sha256=..."
+    }
+  },
+  "verification": {
+    "note": "To verify the signature, compute HMAC SHA256 of the raw request body using your webhook secret",
+    "example_code": "hmac_sha256(webhook_secret, raw_body)"
+  }
+}

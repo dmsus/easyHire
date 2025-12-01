@@ -1,0 +1,53 @@
+post:
+  summary: Refresh access token
+  description: Refresh expired access token using refresh token
+  tags:
+    - Authentication
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          required:
+            - refresh_token
+          properties:
+            refresh_token:
+              type: string
+              example: eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...
+  responses:
+    '200':
+      description: Token refreshed successfully
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              access_token:
+                type: string
+              refresh_token:
+                type: string
+              expires_in:
+                type: integer
+              token_type:
+                type: string
+    '401':
+      description: Invalid or expired refresh token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: true
+            code: "INVALID_REFRESH_TOKEN"
+            message: "Refresh token is invalid or has expired"
+    '403':
+      description: Refresh token revoked
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: true
+            code: "TOKEN_REVOKED"
+            message: "Refresh token has been revoked"

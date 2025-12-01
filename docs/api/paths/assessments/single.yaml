@@ -1,0 +1,91 @@
+get:
+  summary: Get assessment by ID
+  description: Get detailed information about a specific assessment
+  tags:
+    - Assessments
+  security:
+    - bearerAuth: []
+  parameters:
+    - $ref: '#/components/parameters/assessmentIdParam'
+  responses:
+    '200':
+      description: Assessment details
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Assessment'
+    '401':
+      $ref: '#/components/responses/UnauthorizedError'
+    '403':
+      $ref: '#/components/responses/ForbiddenError'
+    '404':
+      $ref: '#/components/responses/NotFoundError'
+
+put:
+  summary: Update assessment
+  description: Update assessment details
+  tags:
+    - Assessments
+  security:
+    - bearerAuth: []
+  parameters:
+    - $ref: '#/components/parameters/assessmentIdParam'
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            title:
+              type: string
+            description:
+              type: string
+            status:
+              type: string
+              enum: [draft, published, archived]
+            competency_weights:
+              type: object
+              additionalProperties:
+                type: number
+            time_limit_minutes:
+              type: integer
+            passing_score:
+              type: number
+            metadata:
+              type: object
+              additionalProperties: true
+  responses:
+    '200':
+      description: Assessment updated successfully
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Assessment'
+    '400':
+      $ref: '#/components/responses/ValidationError'
+    '401':
+      $ref: '#/components/responses/UnauthorizedError'
+    '403':
+      $ref: '#/components/responses/ForbiddenError'
+    '404':
+      $ref: '#/components/responses/NotFoundError'
+
+delete:
+  summary: Delete assessment
+  description: Delete an assessment (soft delete to archive)
+  tags:
+    - Assessments
+  security:
+    - bearerAuth: []
+  parameters:
+    - $ref: '#/components/parameters/assessmentIdParam'
+  responses:
+    '204':
+      description: Assessment deleted successfully
+    '401':
+      $ref: '#/components/responses/UnauthorizedError'
+    '403':
+      $ref: '#/components/responses/ForbiddenError'
+    '404':
+      $ref: '#/components/responses/NotFoundError'

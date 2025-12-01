@@ -1,0 +1,99 @@
+post:
+  summary: Execute code
+  description: Execute Go code in secure container with test cases
+  tags:
+    - Execution
+  security:
+    - bearerAuth: []
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          required:
+            - language
+            - code
+          properties:
+            language:
+              type: string
+              enum: [go, python, javascript]
+              default: "go"
+            code:
+              type: string
+            test_cases:
+              type: array
+              items:
+                type: object
+                properties:
+                  input:
+                    type: string
+                  expected_output:
+                    type: string
+                  hidden:
+                    type: boolean
+                    default: false
+            timeout_seconds:
+              type: integer
+              minimum: 1
+              maximum: 30
+              default: 10
+            memory_limit_mb:
+              type: integer
+              minimum: 64
+              maximum: 1024
+              default: 256
+            environment:
+              type: object
+              additionalProperties: true
+  responses:
+    '200':
+      description: Code execution completed
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              execution_id:
+                type: string
+              status:
+                type: string
+                enum: [completed, timeout, memory_exceeded, compile_error, runtime_error]
+              result:
+                type: object
+                properties:
+                  passed_tests:
+                    type: integer
+                  failed_tests:
+                    type: integer
+                  total_tests:
+                    type: integer
+                  score:
+                    type: number
+                  output:
+                    type: string
+                  error:
+                    type: string
+                    nullable: true
+                  execution_time_ms:
+                    type: integer
+                  memory_used_mb:
+                    type: integer
+              feedback:
+                type: array
+                items:
+                  type: object
+    '400':
+      $ref: '#/components/responses/ValidationError'
+    '401':
+      $ref: '#/components/responses/UnauthorizedError'
+    '429':
+      description: Too many execution requests
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: true
+            code: "EXECUTION_LIMIT_EXCEEDED"
+            message: "Code execution rate limit exceeded"

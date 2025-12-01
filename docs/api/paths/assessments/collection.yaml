@@ -1,0 +1,128 @@
+get:
+  summary: List assessments
+  description: Get list of assessments with pagination and filtering
+  tags:
+    - Assessments
+  security:
+    - bearerAuth: []
+  parameters:
+    - $ref: '#/components/parameters/pageParam'
+    - $ref: '#/components/parameters/limitParam'
+    - name: status
+      in: query
+      schema:
+        type: string
+        enum: [draft, published, active, completed, archived]
+      required: false
+      description: Filter by assessment status
+    - name: role
+      in: query
+      schema:
+        type: string
+        enum: [backend_developer, fullstack_developer, devops_engineer, team_lead]
+      required: false
+      description: Filter by target role
+  responses:
+    '200':
+      description: List of assessments
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              data:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Assessment'
+              pagination:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  limit:
+                    type: integer
+                  pages:
+                    type: integer
+    '401':
+      $ref: '#/components/responses/UnauthorizedError'
+    '403':
+      $ref: '#/components/responses/ForbiddenError'
+
+post:
+  summary: Create new assessment
+  description: Create a new technical assessment with AI-generated questions
+  tags:
+    - Assessments
+  security:
+    - bearerAuth: []
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          required:
+            - title
+            - role
+            - target_level
+          properties:
+            title:
+              type: string
+              example: "Senior Go Developer Assessment"
+            description:
+              type: string
+              example: "Assessment for Senior Go Developer position"
+            role:
+              type: string
+              enum: [backend_developer, fullstack_developer, devops_engineer, team_lead]
+            target_level:
+              type: string
+              enum: [junior, middle, senior, expert]
+            competency_weights:
+              type: object
+              additionalProperties:
+                type: number
+                minimum: 0.5
+                maximum: 2.0
+              example:
+                go_fundamentals: 1.2
+                concurrency: 1.4
+                system_design: 1.3
+            time_limit_minutes:
+              type: integer
+              minimum: 15
+              maximum: 180
+              default: 60
+            question_count:
+              type: integer
+              minimum: 5
+              maximum: 50
+              default: 20
+            passing_score:
+              type: number
+              minimum: 0
+              maximum: 100
+              default: 70
+            metadata:
+              type: object
+              additionalProperties: true
+  responses:
+    '201':
+      description: Assessment created successfully
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Assessment'
+      headers:
+        Location:
+          description: URL of the created assessment
+          schema:
+            type: string
+    '400':
+      $ref: '#/components/responses/ValidationError'
+    '401':
+      $ref: '#/components/responses/UnauthorizedError'
+    '403':
+      $ref: '#/components/responses/ForbiddenError'

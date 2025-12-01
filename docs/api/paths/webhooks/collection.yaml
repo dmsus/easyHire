@@ -1,0 +1,126 @@
+get:
+  summary: List webhooks
+  description: Get list of registered webhooks
+  tags:
+    - Webhooks
+  security:
+    - bearerAuth: []
+    - oauth2: [admin:all]
+  parameters:
+    - $ref: '#/components/parameters/pageParam'
+    - $ref: '#/components/parameters/limitParam'
+  responses:
+    '200':
+      description: List of webhooks
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              data:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    url:
+                      type: string
+                    events:
+                      type: array
+                      items:
+                        type: string
+                    status:
+                      type: string
+                      enum: [active, paused, failed]
+                    created_at:
+                      type: string
+                      format: date-time
+                    last_delivery_at:
+                      type: string
+                      format: date-time
+                      nullable: true
+              pagination:
+                type: object
+    '401':
+      $ref: '#/components/responses/UnauthorizedError'
+    '403':
+      $ref: '#/components/responses/ForbiddenError'
+
+post:
+  summary: Create webhook
+  description: Register a new webhook for event notifications
+  tags:
+    - Webhooks
+  security:
+    - bearerAuth: []
+    - oauth2: [admin:all]
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          required:
+            - url
+            - events
+          properties:
+            url:
+              type: string
+              format: uri
+            events:
+              type: array
+              items:
+                type: string
+                enum:
+                  - assessment.created
+                  - assessment.published
+                  - candidate.invited
+                  - candidate.started
+                  - candidate.completed
+                  - candidate.expired
+                  - question.generated
+                  - question.validated
+                  - code.executed
+                  - result.calculated
+                  - result.ready
+            secret:
+              type: string
+              description: Secret for HMAC signature
+            retry_policy:
+              type: object
+              properties:
+                max_attempts:
+                  type: integer
+                  default: 3
+                backoff_factor:
+                  type: number
+                  default: 2.0
+            metadata:
+              type: object
+              additionalProperties: true
+  responses:
+    '201':
+      description: Webhook created successfully
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+              url:
+                type: string
+              secret:
+                type: string
+              created_at:
+                type: string
+                format: date-time
+    '400':
+      $ref: '#/components/responses/ValidationError'
+    '401':
+      $ref: '#/components/responses/UnauthorizedError'
+    '403':
+      $ref: '#/components/responses/ForbiddenError'

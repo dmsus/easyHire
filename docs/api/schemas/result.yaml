@@ -1,0 +1,93 @@
+Result:
+  type: object
+  required:
+    - id
+    - assessment_id
+    - candidate_id
+    - score
+    - level
+    - created_at
+  properties:
+    id:
+      type: string
+      format: uuid
+      example: "123e4567-e89b-12d3-a456-426614174003"
+    assessment_id:
+      type: string
+      format: uuid
+    candidate_id:
+      type: string
+      format: uuid
+    score:
+      type: number
+      minimum: 0
+      maximum: 100
+      example: 78.5
+    fibonacci_score:
+      type: number
+      example: 55
+    level:
+      type: string
+      enum:
+        - trainee
+        - junior
+        - middle
+        - senior
+        - expert
+    passed:
+      type: boolean
+    time_spent_minutes:
+      type: integer
+    started_at:
+      type: string
+      format: date-time
+    completed_at:
+      type: string
+      format: date-time
+    competency_breakdown:
+      type: array
+      items:
+        type: object
+        properties:
+          competency:
+            type: string
+          score:
+            type: number
+          level:
+            type: string
+    question_results:
+      type: array
+      items:
+        type: object
+        properties:
+          question_id:
+            type: string
+            format: uuid
+          correct:
+            type: boolean
+          score:
+            type: number
+          time_spent_seconds:
+            type: integer
+    feedback:
+      type: array
+      items:
+        type: object
+        properties:
+          type:
+            type: string
+          message:
+            type: string
+          severity:
+            type: string
+            enum: [info, warning, critical]
+    metadata:
+      type: object
+      additionalProperties: true
+    created_at:
+      type: string
+      format: date-time
+    updated_at:
+      type: string
+      format: date-time
+      nullable: true

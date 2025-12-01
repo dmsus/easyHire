@@ -1,0 +1,75 @@
+post:
+  summary: Authenticate user
+  description: Authenticate user with email and password, returns JWT tokens
+  tags:
+    - Authentication
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          required:
+            - email
+            - password
+          properties:
+            email:
+              type: string
+              format: email
+              example: user@example.com
+            password:
+              type: string
+              format: password
+              example: SecurePass123!
+  responses:
+    '200':
+      description: Authentication successful
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              access_token:
+                type: string
+                example: eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...
+              refresh_token:
+                type: string
+                example: eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...
+              expires_in:
+                type: integer
+                example: 900
+              token_type:
+                type: string
+                example: Bearer
+              user:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  email:
+                    type: string
+                  role:
+                    type: string
+                  name:
+                    type: string
+    '401':
+      description: Invalid credentials
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: true
+            code: "INVALID_CREDENTIALS"
+            message: "Invalid email or password"
+    '429':
+      description: Too many login attempts
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: true
+            code: "RATE_LIMIT_EXCEEDED"
+            message: "Too many login attempts, please try again later"

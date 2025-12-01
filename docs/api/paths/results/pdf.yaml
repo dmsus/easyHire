@@ -1,0 +1,34 @@
+get:
+  summary: Download PDF report
+  description: Download assessment result as PDF report
+  tags:
+    - Results
+  security:
+    - bearerAuth: []
+  parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Result ID
+  responses:
+    '200':
+      description: PDF report
+      content:
+        application/pdf:
+          schema:
+            type: string
+            format: binary
+      headers:
+        Content-Disposition:
+          schema:
+            type: string
+          example: 'attachment; filename="assessment-result-123e4567.pdf"'
+    '401':
+      $ref: '#/components/responses/UnauthorizedError'
+    '403':
+      $ref: '#/components/responses/ForbiddenError'
+    '404':
+      $ref: '#/components/responses/NotFoundError'

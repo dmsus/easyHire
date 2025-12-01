@@ -1,0 +1,68 @@
+post:
+  summary: Invite candidates to assessment
+  description: Send invitation emails to candidates for an assessment
+  tags:
+    - Assessments
+  security:
+    - bearerAuth: []
+  parameters:
+    - $ref: '#/components/parameters/assessmentIdParam'
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          required:
+            - candidates
+          properties:
+            candidates:
+              type: array
+              items:
+                type: object
+                required:
+                  - email
+                properties:
+                  email:
+                    type: string
+                    format: email
+                  first_name:
+                    type: string
+                  last_name:
+                    type: string
+                  metadata:
+                    type: object
+            email_template:
+              type: object
+              properties:
+                subject:
+                  type: string
+                body:
+                  type: string
+            expires_in_days:
+              type: integer
+              default: 7
+  responses:
+    '202':
+      description: Invitations queued for sending
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+              invited_count:
+                type: integer
+              failed_count:
+                type: integer
+              job_id:
+                type: string
+    '400':
+      $ref: '#/components/responses/ValidationError'
+    '401':
+      $ref: '#/components/responses/UnauthorizedError'
+    '403':
+      $ref: '#/components/responses/ForbiddenError'
+    '404':
+      $ref: '#/components/responses/NotFoundError'

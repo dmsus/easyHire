@@ -1,0 +1,43 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "/v1/questions/generate",
+    "headers": {
+      "Authorization": "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...",
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "competencies": [
+        {
+          "name": "concurrency",
+          "level": "senior",
+          "count": 3
+        },
+        {
+          "name": "system_design",
+          "level": "middle",
+          "count": 2
+        },
+        {
+          "name": "go_fundamentals",
+          "level": "junior",
+          "count": 1
+        }
+      ],
+      "question_types": ["coding", "multiple_choice", "architecture"],
+      "model": "gemini",
+      "context": "Focus on modern Go patterns and best practices for cloud-native applications"
+    }
+  },
+  "response": {
+    "status": 202,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "job_id": "job_7890123456",
+      "estimated_time": 45,
+      "message": "Question generation started. You will receive a webhook notification when complete."
+    }
+  }
+}

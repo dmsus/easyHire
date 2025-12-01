@@ -1,0 +1,50 @@
+post:
+  summary: Test webhook
+  description: Send test event to webhook
+  tags:
+    - Webhooks
+  security:
+    - bearerAuth: []
+    - oauth2: [admin:all]
+  parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Webhook ID
+  requestBody:
+    required: false
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            event:
+              type: string
+              default: "test"
+            payload:
+              type: object
+              additionalProperties: true
+  responses:
+    '200':
+      description: Webhook test initiated
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              test_id:
+                type: string
+              status:
+                type: string
+                enum: [queued, delivered, failed]
+              message:
+                type: string
+    '401':
+      $ref: '#/components/responses/UnauthorizedError'
+    '403':
+      $ref: '#/components/responses/ForbiddenError'
+    '404':
+      $ref: '#/components/responses/NotFoundError'

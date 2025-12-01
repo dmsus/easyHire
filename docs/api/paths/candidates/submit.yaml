@@ -1,0 +1,89 @@
+post:
+  summary: Submit assessment
+  description: Candidate submits completed assessment for evaluation
+  tags:
+    - Candidates
+  security:
+    - bearerAuth: []
+  parameters:
+    - $ref: '#/components/parameters/candidateIdParam'
+    - name: assessmentId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Assessment ID
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          required:
+            - answers
+          properties:
+            answers:
+              type: array
+              items:
+                type: object
+                required:
+                  - question_id
+                properties:
+                  question_id:
+                    type: string
+                    format: uuid
+                  answer:
+                    oneOf:
+                      - type: string
+                      - type: object
+                  code:
+                    type: string
+                    nullable: true
+            metadata:
+              type: object
+              additionalProperties: true
+  responses:
+    '202':
+      description: Assessment submitted for evaluation
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+              result_id:
+                type: string
+                format: uuid
+              estimated_completion_time:
+                type: integer
+                description: Estimated time in seconds for evaluation
+    '400':
+      description: Invalid submission
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            not_started:
+              value:
+                error: true
+                code: "ASSESSMENT_NOT_STARTED"
+                message: "Assessment must be started before submission"
+            already_submitted:
+              value:
+                error: true
+                code: "ASSESSMENT_ALREADY_SUBMITTED"
+                message: "Assessment has already been submitted"
+            time_expired:
+              value:
+                error: true
+                code: "TIME_EXPIRED"
+                message: "Assessment time has expired"
+    '401':
+      $ref: '#/components/responses/UnauthorizedError'
+    '403':
+      $ref: '#/components/responses/ForbiddenError'
+    '404':
+      $ref: '#/components/responses/NotFoundError'

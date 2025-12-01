@@ -1,0 +1,46 @@
+post:
+  summary: Test code execution
+  description: Test code execution without saving results (dry run)
+  tags:
+    - Execution
+  security:
+    - bearerAuth: []
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          required:
+            - language
+            - code
+          properties:
+            language:
+              type: string
+              enum: [go, python, javascript]
+            code:
+              type: string
+            timeout_seconds:
+              type: integer
+              default: 5
+  responses:
+    '200':
+      description: Test execution completed
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+              output:
+                type: string
+              error:
+                type: string
+                nullable: true
+              execution_time_ms:
+                type: integer
+    '400':
+      $ref: '#/components/responses/ValidationError'
+    '401':
+      $ref: '#/components/responses/UnauthorizedError'
