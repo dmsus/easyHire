@@ -44,30 +44,41 @@ func main() {
 		Msg("🚀 Starting EasyHire Backend API")
 
 	// Initialize database
-	db, err := database.NewDatabase(&cfg.Database)
-	if err != nil {
-		log.Fatal().Err(err).Msg("Failed to connect to database")
-	}
-	defer func() {
-		if err := db.Close(); err != nil {
-			log.Error().Err(err).Msg("Failed to close database connection")
+	var db *database.Database
+	if cfg.Database.Host != "" {
+		db, err = database.NewDatabase(&cfg.Database)
+		if err != nil {
+			log.Fatal().Err(err).Msg("Failed to connect to database")
 		}
-	}()
+		defer func() {
+			if err := db.Close(); err != nil {
+				log.Error().Err(err).Msg("Failed to close database connection")
+			}
+		}()
+		log.Info().Msg("✅ Database connection established")
+	} else {
+		log.Warn().Msg("⚠️ Database configuration missing, running without database")
+	}
 
 	// Initialize Redis
-	redisClient := redis.NewClient(&redis.Options{
-		Addr:     fmt.Sprintf("%s:%d", cfg.Redis.Host, cfg.Redis.Port),
-		Password: cfg.Redis.Password,
-		DB:       cfg.Redis.DB,
-		PoolSize: cfg.Redis.PoolSize,
-	})
+	var redisClient *redis.Client
+	if cfg.Redis.Host != "" {
+		redisClient = redis.NewClient(&redis.Options{
+			Addr:     fmt.Sprintf("%s:%d", cfg.Redis.Host, cfg.Redis.Port),
+			Password: cfg.Redis.Password,
+			DB:       cfg.Redis.DB,
+			PoolSize: cfg.Redis.PoolSize,
+		})
 
-	// Test Redis connection
-	if _, err := redisClient.Ping(context.Background()).Result(); err != nil {
-		log.Warn().Err(err).Msg("Redis connection failed, running without cache")
-		redisClient = nil
+		// Test Redis connection
+		if _, err := redisClient.Ping(context.Background()).Result(); err != nil {
+			log.Warn().Err(err).Msg("Redis connection failed, running without cache")
+			redisClient = nil
+		} else {
+			log.Info().Msg("✅ Redis connection established")
+		}
 	} else {
-		log.Info().Msg("✅ Redis connection established")
+		log.Warn().Msg("⚠️ Redis configuration missing, running without cache")
 	}
 
 	// Set Gin mode
@@ -79,7 +90,7 @@ func main() {
 	// Global middleware
 	router.Use(middleware.Logger())
 	router.Use(middleware.Recovery())
-	router.Use(middleware.CORS(&cfg.Security))
+	router.Use(middleware.CORS(cfg.Security.CORSOrigins))
 
 	// Health check handler
 	healthHandler := handlers.NewHealthHandler(db, redisClient)

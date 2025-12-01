@@ -1,0 +1,74 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:14-alpine
+    container_name: easyhire-postgres
+    environment:
+      POSTGRES_USER: easyhire
+      POSTGRES_PASSWORD: securepassword
+      POSTGRES_DB: easyhire
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U easyhire"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: easyhire-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  ai-service:
+    build:
+      context: ../ai
+      dockerfile: Dockerfile.dev
+    container_name: easyhire-ai
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgres://easyhire:securepassword@postgres:5432/easyhire
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ../ai:/app
+    command: uvicorn main:app --reload --host 0.0.0.0 --port 8000
+
+  code-executor:
+    build:
+      context: ../code-executor
+      dockerfile: Dockerfile.dev
+    container_name: easyhire-code-executor
+    ports:
+      - "8081:8081"
+    environment:
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - REDIS_URL=redis://redis:6379/0
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ../code-executor:/app
+    depends_on:
+      redis:
+        condition: service_healthy
+    command: go run cmd/executor/main.go
+
+volumes:
+  postgres_data:
+  redis_data:

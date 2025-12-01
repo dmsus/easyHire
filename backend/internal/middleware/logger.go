@@ -3,55 +3,35 @@ package middleware
 import (
 	"time"
 
-	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/easyhire/backend/internal/pkg/logger"
+	"github.com/gin-gonic/gin"
 )
 
 func Logger() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		start := time.Now()
-		
-		// Generate request ID
-		requestID := uuid.New().String()
-		c.Set("request_id", requestID)
-		
-		// Set logger with request context
-		log := logger.Global().WithRequestID(requestID)
-		c.Set("logger", log)
+		path := c.Request.URL.Path
+		query := c.Request.URL.RawQuery
 
-		// Log request
-		log.Info().
-			Str("method", c.Request.Method).
-			Str("path", c.Request.URL.Path).
-			Str("ip", c.ClientIP()).
-			Str("user_agent", c.Request.UserAgent()).
-			Msg("Request started")
-
-		// Process request
 		c.Next()
 
-		// Log response
-		latency := time.Since(start)
-		status := c.Writer.Status()
-		errorMessage := c.Errors.ByType(gin.ErrorTypePrivate).String()
+		end := time.Now()
+		latency := end.Sub(start)
 
-		logEntry := log.Info().
-			Int("status", status).
-			Dur("latency", latency).
+		log := logger.Global().With().
 			Str("method", c.Request.Method).
-			Str("path", c.Request.URL.Path)
+			Str("path", path).
+			Str("query", query).
+			Int("status", c.Writer.Status()).
+			Str("ip", c.ClientIP()).
+			Str("user-agent", c.Request.UserAgent()).
+			Dur("latency", latency).
+			Logger()
 
-		if errorMessage != "" {
-			logEntry.Str("error", errorMessage)
-		}
-
-		if status >= 400 && status < 500 {
-			logEntry.Msg("Client error")
-		} else if status >= 500 {
-			logEntry.Msg("Server error")
+		if len(c.Errors) > 0 {
+			log.Error().Msg(c.Errors.String())
 		} else {
-			logEntry.Msg("Request completed")
+			log.Info().Msg("Request completed")
 		}
 	}
 }

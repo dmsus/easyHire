@@ -29,26 +29,23 @@ type HealthResponse struct {
 	Services  map[string]string `json:"services"`
 }
 
-// @Summary Health check
-// @Description Check if the API is healthy
-// @Tags health
-// @Accept json
-// @Produce json
-// @Success 200 {object} HealthResponse
-// @Router /health [get]
 func (h *HealthHandler) HealthCheck(c *gin.Context) {
-	log := logger.Global().WithRequestID(c.GetString("request_id"))
+	log := logger.Global().With().Str("handler", "health").Logger()
+	log.Info().Msg("Health check request")
 	
 	services := make(map[string]string)
 	status := "healthy"
 
 	// Check database
-	if err := h.db.HealthCheck(); err != nil {
-		services["database"] = "unhealthy"
-		status = "degraded"
-		log.Error().Err(err).Msg("Database health check failed")
-	} else {
-		services["database"] = "healthy"
+	if h.db != nil {
+		if err := h.db.HealthCheck(); err != nil {
+			services["database"] = "unhealthy"
+			status = "degraded"
+			log.Error().Err(err).Msg("Database health check failed")
+		} else {
+			services["database"] = "healthy"
+			log.Debug().Msg("Database health check passed")
+		}
 	}
 
 	// Check Redis
@@ -59,6 +56,7 @@ func (h *HealthHandler) HealthCheck(c *gin.Context) {
 			log.Error().Err(err).Msg("Redis health check failed")
 		} else {
 			services["redis"] = "healthy"
+			log.Debug().Msg("Redis health check passed")
 		}
 	}
 
@@ -69,66 +67,33 @@ func (h *HealthHandler) HealthCheck(c *gin.Context) {
 		Services:  services,
 	}
 
+	log.Info().Str("status", status).Msg("Health check completed")
 	c.JSON(http.StatusOK, response)
 }
 
-// @Summary Readiness check
-// @Description Check if the API is ready to serve requests
-// @Tags health
-// @Accept json
-// @Produce json
-// @Success 200 {object} map[string]interface{}
-// @Router /ready [get]
 func (h *HealthHandler) ReadinessCheck(c *gin.Context) {
+	logger.Global().Info().Str("handler", "health").Msg("Readiness check")
+	
 	response := gin.H{
 		"status":    "ready",
 		"timestamp": time.Now().UTC(),
-		"services": gin.H{
-			"api":       "ready",
-			"database":  "ready",
-			"redis":     "ready",
-			"migrations": "applied",
-		},
 	}
 
 	c.JSON(http.StatusOK, response)
 }
 
-// @Summary Liveness check
-// @Description Simple liveness probe
-// @Tags health
-// @Accept json
-// @Produce json
-// @Success 200 {object} map[string]interface{}
-// @Router /live [get]
 func (h *HealthHandler) LivenessCheck(c *gin.Context) {
+	logger.Global().Info().Str("handler", "health").Msg("Liveness check")
+	
 	c.JSON(http.StatusOK, gin.H{
 		"status":    "alive",
 		"timestamp": time.Now().UTC(),
 	})
 }
 
-// @Summary Metrics endpoint
-// @Description Prometheus metrics
-// @Tags health
-// @Accept json
-// @Produce text/plain
-// @Router /metrics [get]
-func (h *HealthHandler) Metrics(c *gin.Context) {
-	// This would be handled by Prometheus middleware
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Metrics are exposed on /metrics endpoint via Prometheus middleware",
-	})
-}
-
-// @Summary API information
-// @Description Get API version and information
-// @Tags health
-// @Accept json
-// @Produce json
-// @Success 200 {object} map[string]interface{}
-// @Router / [get]
 func (h *HealthHandler) APIRoot(c *gin.Context) {
+	logger.Global().Info().Str("handler", "root").Msg("API root request")
+	
 	response := gin.H{
 		"name":        "EasyHire API",
 		"version":     "1.0.0",

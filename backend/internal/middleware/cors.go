@@ -2,28 +2,18 @@ package middleware
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/easyhire/backend/internal/pkg/config"
 )
 
-func CORS(cfg *config.SecurityConfig) gin.HandlerFunc {
+func CORS(origins []string) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		origin := c.Request.Header.Get("Origin")
+		if len(origins) == 0 {
+			origins = []string{"*"}
+		}
 		
-		// Check if origin is allowed
-		allowed := false
-		for _, allowedOrigin := range cfg.CORSAllowedOrigins {
-			if allowedOrigin == "*" || allowedOrigin == origin {
-				allowed = true
-				break
-			}
-		}
-
-		if allowed {
-			c.Writer.Header().Set("Access-Control-Allow-Origin", origin)
-			c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
-			c.Writer.Header().Set("Access-Control-Allow-Headers", cfg.CORSAllowedHeaders)
-			c.Writer.Header().Set("Access-Control-Allow-Methods", cfg.CORSAllowedMethods)
-		}
+		c.Writer.Header().Set("Access-Control-Allow-Origin", origins[0])
+		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
+		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
+		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT, DELETE")
 
 		if c.Request.Method == "OPTIONS" {
 			c.AbortWithStatus(204)
