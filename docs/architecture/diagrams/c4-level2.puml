@@ -1,0 +1,44 @@
+@startuml c4_level2
+!includeurl https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+Person(hr, "HR Specialist", "Creates assessments")
+Person(candidate, "Candidate", "Takes tests")
+Person(tech_expert, "Technical Expert", "Reviews questions")
+Person(admin, "System Admin", "Configures system")
+
+System_Boundary(easyhire, "EasyHire Platform") {
+    Container(spa, "Single Page Application", "React + TypeScript", "User interface for all roles")
+    
+    Container(backend, "Backend API", "Go + Gin", "Business logic and assessment management")
+    
+    Container(ai_service, "AI Question Service", "Python + FastAPI", "Generates questions using AI")
+    
+    ContainerDb(db, "Database", "PostgreSQL + pgvector", "Stores data and embeddings")
+    
+    Container(code_executor, "Code Execution Service", "Go + Docker", "Executes Go code securely")
+    
+    Container(redis, "Cache", "Redis", "Caching and sessions")
+}
+
+System_Ext(ai_providers, "AI Providers", "Gemini, OpenRouter")
+System_Ext(email, "Email Service", "SendGrid")
+System_Ext(ats, "ATS Systems", "Greenhouse")
+System_Ext(sso, "SSO Provider", "Auth0")
+
+Rel(hr, spa, "Uses", "HTTPS")
+Rel(candidate, spa, "Uses", "HTTPS")
+Rel(tech_expert, spa, "Uses", "HTTPS")
+Rel(admin, spa, "Uses", "HTTPS")
+
+Rel(spa, backend, "API calls", "REST/HTTPS")
+Rel(backend, db, "Reads/writes", "SQL")
+Rel(backend, ai_service, "Requests questions", "gRPC/HTTP")
+Rel(backend, code_executor, "Executes code", "HTTP")
+Rel(backend, redis, "Caches", "Redis")
+
+Rel(ai_service, ai_providers, "Calls", "HTTPS")
+Rel(backend, email, "Sends emails", "SMTP")
+Rel(backend, ats, "Exports data", "API")
+Rel(backend, sso, "Authenticates", "OAuth")
+
+@enduml
