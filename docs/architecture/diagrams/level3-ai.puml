@@ -1,28 +1,36 @@
-@startuml c4_level3_ai
-!includeurl https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+@startuml
+skinparam componentStyle uml2
+title AI Service Components
 
-Container(ai_service, "AI Question Service", "Python, FastAPI", "Question generation")
+package "AI Question Service" {
+  component "Generation Handler" as gen
+  component "Validation Handler" as val
+  component "RAG Engine" as rag
+  component "Prompt Engine" as prompt
+}
 
-Component(generation_handler, "Generation Handler", "FastAPI Handler", "Handles question generation requests")
-Component(validation_handler, "Validation Handler", "FastAPI Handler", "Validates AI-generated questions")
-Component(rag_engine, "RAG Engine", "Python Service", "Retrieval-Augmented Generation")
-Component(prompt_engine, "Prompt Engine", "Python Service", "Creates optimized prompts")
+database "Vector DB" as vdb {
+  folder "Embedding Store" as embeddings
+}
 
-ContainerDb(vector_db, "Vector Database", "PostgreSQL + pgvector")
+cloud "AI Providers" {
+  node "Gemini API" as gemini
+  node "OpenRouter" as openrouter
+}
 
-Component(embedding_store, "Embedding Store", "pgvector", "Vector embeddings storage")
+gen --> rag : uses for context
+gen --> prompt : builds prompts
+val --> rag : validates against
 
-System_Ext(gemini, "Gemini API", "Google's AI model")
-System_Ext(openrouter, "OpenRouter", "Multiple AI models API")
+gen --> gemini : calls primary
+gen --> openrouter : fallback calls
 
-Rel(generation_handler, rag_engine, "Uses for context")
-Rel(generation_handler, prompt_engine, "Builds prompts")
-Rel(validation_handler, rag_engine, "Validates against existing")
+rag --> embeddings : queries vectors
 
-Rel(generation_handler, gemini, "Calls for generation")
-Rel(generation_handler, openrouter, "Fallback calls")
-
-Rel(rag_engine, embedding_store, "Queries vectors")
-Rel(embedding_store, vector_db, "Stored in")
+note right of rag
+RAG: Retrieval-Augmented
+Generation with vector
+similarity search
+end note
 
 @enduml

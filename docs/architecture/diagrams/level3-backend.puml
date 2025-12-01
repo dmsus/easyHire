@@ -1,32 +1,34 @@
-@startuml c4_level3_backend
-!includeurl https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+@startuml
+skinparam componentStyle uml2
+title Backend API Components
 
-Container(backend, "Backend API", "Go, Gin", "Handles business logic")
+package "Backend API" {
+  component "Authentication Handler" as auth
+  component "Assessment Handler" as assessment
+  component "Question Handler" as question
+  component "Scoring Engine" as scoring
+  component "Code Execution Client" as code_client
+}
 
-Component(auth_handler, "Authentication Handler", "Gin Handler", "User authentication and JWT management")
-Component(assessment_handler, "Assessment Handler", "Gin Handler", "Creates and manages assessments")
-Component(question_handler, "Question Handler", "Gin Handler", "Manages question bank")
-Component(scoring_engine, "Scoring Engine", "Go Service", "Calculates Fibonacci-based scores")
-Component(code_execution_client, "Code Execution Client", "Go Client", "Communicates with execution service")
+database "PostgreSQL" as db {
+  folder "User Repository" as user_repo
+  folder "Assessment Repository" as assess_repo
+  folder "Question Repository" as question_repo
+  folder "Result Repository" as result_repo
+}
 
-ContainerDb(db, "Database", "PostgreSQL")
+auth --> user_repo : reads/writes
+assessment --> assess_repo : reads/writes
+question --> question_repo : reads/writes
+scoring --> result_repo : reads/writes
 
-Component(user_repository, "User Repository", "GORM", "User data access")
-Component(assessment_repository, "Assessment Repository", "GORM", "Assessment data access")
-Component(question_repository, "Question Repository", "GORM", "Question data access")
-Component(result_repository, "Result Repository", "GORM", "Result data access")
+assessment --> scoring : calls for scoring
+assessment --> code_client : submits code
 
-Rel(auth_handler, user_repository, "Uses")
-Rel(assessment_handler, assessment_repository, "Uses")
-Rel(question_handler, question_repository, "Uses")
-Rel(scoring_engine, result_repository, "Uses")
-
-Rel(assessment_handler, scoring_engine, "Calls for scoring")
-Rel(assessment_handler, code_execution_client, "Submits code")
-
-Rel(user_repository, db, "SQL")
-Rel(assessment_repository, db, "SQL")
-Rel(question_repository, db, "SQL")
-Rel(result_repository, db, "SQL")
+note right of scoring
+Fibonacci-based scoring:
+Level weights: 1,2,3,5
+Thresholds: 8,21,55,144
+end note
 
 @enduml

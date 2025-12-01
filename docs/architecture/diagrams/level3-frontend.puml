@@ -1,33 +1,36 @@
-@startuml c4_level3_frontend
-!includeurl https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+@startuml
+skinparam componentStyle uml2
+title Frontend Application Components
 
-Container(spa, "Single Page Application", "React, TypeScript", "User interface")
+package "React SPA" {
+  component "HR Dashboard" as hr
+  component "Candidate Test Interface" as candidate
+  component "Expert Panel" as expert
+  component "Admin Console" as admin
+}
 
-Component(hr_dashboard, "HR Dashboard", "React Component", "Assessment creation and candidate management")
-Component(candidate_test, "Candidate Test Interface", "React Component", "Test taking with code editor")
-Component(expert_panel, "Expert Panel", "React Component", "Question review and validation")
-Component(admin_console, "Admin Console", "React Component", "System configuration")
+rectangle "Shared Components" {
+  component "API Client" as api
+  component "Code Editor" as editor
+  component "State Store" as state
+  component "Router" as router
+}
 
-Component(api_client, "API Client", "TypeScript Service", "HTTP client for backend communication")
-Component(code_editor, "Code Editor", "Monaco Editor", "Syntax highlighting and code editing")
-Component(state_store, "State Store", "Zustand", "Global state management")
-Component(router, "Router", "React Router", "Client-side navigation")
+hr --> api : fetches data
+candidate --> api : submits answers
+expert --> api : manages questions
+admin --> api : configures system
 
-Rel(hr_dashboard, api_client, "Fetches data")
-Rel(candidate_test, api_client, "Submits answers")
-Rel(expert_panel, api_client, "Manages questions")
-Rel(admin_console, api_client, "Configures system")
+candidate --> editor : uses for coding
 
-Rel(candidate_test, code_editor, "Uses for coding")
+hr --> state : manages
+candidate --> state : manages
+expert --> state : manages
+admin --> state : manages
 
-Rel(hr_dashboard, state_store, "Manages state")
-Rel(candidate_test, state_store, "Manages state")
-Rel(expert_panel, state_store, "Manages state")
-Rel(admin_console, state_store, "Manages state")
-
-Rel(hr_dashboard, router, "Navigates")
-Rel(candidate_test, router, "Navigates")
-Rel(expert_panel, router, "Navigates")
-Rel(admin_console, router, "Navigates")
+hr --> router : navigates
+candidate --> router : navigates
+expert --> router : navigates
+admin --> router : navigates
 
 @enduml
