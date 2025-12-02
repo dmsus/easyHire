@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"gorm.io/datatypes"
 )
 
 type UserRole string
@@ -25,7 +26,7 @@ type User struct {
 	AvatarURL    *string    `gorm:"type:text" json:"avatar_url,omitempty"`
 	IsActive     bool       `gorm:"default:true" json:"is_active"`
 	LastLoginAt  *time.Time `json:"last_login_at,omitempty"`
-	Metadata     map[string]interface{} `gorm:"type:jsonb;default:'{}'" json:"metadata,omitempty"`
+	Metadata     datatypes.JSONMap `gorm:"type:jsonb;default:'{}'" json:"metadata,omitempty"`
 	
 	// Relationships
 	Assessments []Assessment `gorm:"foreignKey:CreatedBy" json:"assessments,omitempty"`

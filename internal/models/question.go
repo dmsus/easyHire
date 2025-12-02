@@ -68,7 +68,7 @@ type Question struct {
 	
 	// Relationships
 	Assessments []Assessment `gorm:"many2many:assessment_questions;" json:"assessments,omitempty"`
-	Results     []Result     `gorm:"foreignKey:QuestionID" json:"results,omitempty"`
+	// Results []Result `gorm:"foreignKey:QuestionID" json:"results,omitempty"` - REMOVED: Results stored in QuestionResults JSON field
 }
 
 func (Question) TableName() string {
