@@ -15,6 +15,8 @@ import (
 	"github.com/easyhire/backend/internal/pkg/config"
 	"github.com/easyhire/backend/internal/pkg/logger"
 	"github.com/easyhire/backend/pkg/database"
+	"github.com/easyhire/internal/models"
+	"github.com/easyhire/internal/pkg/auth"
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/redis/go-redis/v9"
@@ -36,7 +38,7 @@ func main() {
 	if err := logger.InitGlobalLogger(cfg.Server.Mode, true); err != nil {
 		log.Fatalf("Failed to initialize logger: %v", err)
 	}
-	
+
 	log := logger.Global()
 	log.Info().
 		Str("version", version).
@@ -81,6 +83,23 @@ func main() {
 		log.Warn().Msg("⚠️ Redis configuration missing, running without cache")
 	}
 
+	// Initialize JWT service
+	jwtCfg := &auth.JWTConfig{
+		JWTPrivateKey:      cfg.Security.JWTPrivateKey,
+		JWTPublicKey:       cfg.Security.JWTPublicKey,
+		JWTSecret:          cfg.Security.JWTSecret,
+		AccessTokenExpiry:  cfg.Security.AccessTokenExpiry,
+		RefreshTokenExpiry: cfg.Security.RefreshTokenExpiry,
+	}
+
+	jwtService, err := auth.NewJWTService(jwtCfg)
+	if err != nil {
+		log.Fatal().Err(err).Msg("Failed to initialize JWT service")
+	}
+
+	// Initialize password service
+	passwordService := auth.NewPasswordService()
+
 	// Set Gin mode
 	gin.SetMode(cfg.Server.Mode)
 
@@ -94,13 +113,16 @@ func main() {
 
 	// Health check handler
 	healthHandler := handlers.NewHealthHandler(db, redisClient)
-	
-	// Health routes
+
+	// Auth handler
+	authHandler := handlers.NewAuthHandler(db, jwtService, passwordService)
+
+	// Health routes (public)
 	router.GET("/", healthHandler.APIRoot)
 	router.GET("/health", healthHandler.HealthCheck)
 	router.GET("/ready", healthHandler.ReadinessCheck)
 	router.GET("/live", healthHandler.LivenessCheck)
-	
+
 	// Metrics endpoint (Prometheus)
 	if cfg.Monitoring.MetricsEnabled {
 		router.GET("/metrics", gin.WrapH(promhttp.Handler()))
@@ -110,35 +132,115 @@ func main() {
 	// API v1 routes group
 	apiV1 := router.Group("/api/v1")
 	{
-		// Authentication routes
-		auth := apiV1.Group("/auth")
+		// Public auth routes
+		authGroup := apiV1.Group("/auth")
 		{
-			auth.POST("/login", func(c *gin.Context) {
-				c.JSON(http.StatusOK, gin.H{"message": "Login endpoint - TODO"})
-			})
-			auth.POST("/refresh", func(c *gin.Context) {
-				c.JSON(http.StatusOK, gin.H{"message": "Refresh endpoint - TODO"})
-			})
-			auth.POST("/logout", func(c *gin.Context) {
-				c.JSON(http.StatusOK, gin.H{"message": "Logout endpoint - TODO"})
-			})
+			authGroup.POST("/register", authHandler.Register)
+			authGroup.POST("/login", authHandler.Login)
+			authGroup.POST("/refresh", authHandler.Refresh)
+
+			// Protected auth routes
+			protectedAuth := authGroup.Group("")
+			protectedAuth.Use(middleware.AuthMiddleware(jwtService))
+			{
+				protectedAuth.GET("/me", authHandler.GetProfile)
+				protectedAuth.POST("/logout", authHandler.Logout)
+			}
 		}
 
-		// Assessments routes
-		assessments := apiV1.Group("/assessments")
+		// Protected routes (require authentication)
+		protected := apiV1.Group("")
+		protected.Use(middleware.AuthMiddleware(jwtService))
 		{
-			assessments.GET("", func(c *gin.Context) {
-				c.JSON(http.StatusOK, gin.H{"message": "List assessments - TODO"})
-			})
-			assessments.POST("", func(c *gin.Context) {
-				c.JSON(http.StatusOK, gin.H{"message": "Create assessment - TODO"})
-			})
-			assessments.GET("/:id", func(c *gin.Context) {
-				c.JSON(http.StatusOK, gin.H{"message": "Get assessment - TODO"})
-			})
+			// Assessments routes (HR and Admin only)
+			assessments := protected.Group("/assessments")
+			assessments.Use(middleware.HRorAdmin())
+			{
+				assessments.GET("", func(c *gin.Context) {
+					c.JSON(http.StatusOK, gin.H{"message": "List assessments - TODO"})
+				})
+				assessments.POST("", func(c *gin.Context) {
+					c.JSON(http.StatusOK, gin.H{"message": "Create assessment - TODO"})
+				})
+				assessments.GET("/:id", func(c *gin.Context) {
+					c.JSON(http.StatusOK, gin.H{"message": "Get assessment - TODO"})
+				})
+				assessments.PUT("/:id", func(c *gin.Context) {
+					c.JSON(http.StatusOK, gin.H{"message": "Update assessment - TODO"})
+				})
+				assessments.DELETE("/:id", func(c *gin.Context) {
+					c.JSON(http.StatusOK, gin.H{"message": "Delete assessment - TODO"})
+				})
+			}
+
+			// Candidates routes (HR and Admin only)
+			candidates := protected.Group("/candidates")
+			candidates.Use(middleware.HRorAdmin())
+			{
+				candidates.GET("", func(c *gin.Context) {
+					c.JSON(http.StatusOK, gin.H{"message": "List candidates - TODO"})
+				})
+				candidates.POST("", func(c *gin.Context) {
+					c.JSON(http.StatusOK, gin.H{"message": "Create candidate - TODO"})
+				})
+				candidates.GET("/:id", func(c *gin.Context) {
+					c.JSON(http.StatusOK, gin.H{"message": "Get candidate - TODO"})
+				})
+			}
+
+			// Questions routes (HR, Admin, and Technical Experts)
+			questions := protected.Group("/questions")
+			questions.Use(middleware.RoleMiddleware(
+				models.RoleHR,
+				models.RoleAdmin,
+				models.RoleTechnicalExpert,
+			))
+			{
+				questions.GET("", func(c *gin.Context) {
+					c.JSON(http.StatusOK, gin.H{"message": "List questions - TODO"})
+				})
+				questions.POST("", func(c *gin.Context) {
+					c.JSON(http.StatusOK, gin.H{"message": "Create question - TODO"})
+				})
+				questions.GET("/:id", func(c *gin.Context) {
+					c.JSON(http.StatusOK, gin.H{"message": "Get question - TODO"})
+				})
+			}
+
+			// Results routes (accessible by all authenticated users)
+			results := protected.Group("/results")
+			{
+				results.GET("", func(c *gin.Context) {
+					c.JSON(http.StatusOK, gin.H{"message": "List results - TODO"})
+				})
+				results.GET("/:id", func(c *gin.Context) {
+					c.JSON(http.StatusOK, gin.H{"message": "Get result - TODO"})
+				})
+			}
+
+			// Admin-only routes
+			admin := protected.Group("/admin")
+			admin.Use(middleware.AdminOnly())
+			{
+				admin.GET("/users", func(c *gin.Context) {
+					c.JSON(http.StatusOK, gin.H{"message": "List all users - TODO"})
+				})
+				admin.GET("/stats", func(c *gin.Context) {
+					c.JSON(http.StatusOK, gin.H{"message": "Admin statistics - TODO"})
+				})
+			}
 		}
 
-		// Add more API routes here...
+		// Public assessment invitation routes (no auth required)
+		public := apiV1.Group("/public")
+		{
+			public.GET("/assessments/:invite_code", func(c *gin.Context) {
+				c.JSON(http.StatusOK, gin.H{"message": "Get assessment by invite code - TODO"})
+			})
+			public.POST("/assessments/:invite_code/start", func(c *gin.Context) {
+				c.JSON(http.StatusOK, gin.H{"message": "Start assessment - TODO"})
+			})
+		}
 	}
 
 	// Start server
