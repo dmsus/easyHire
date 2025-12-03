@@ -15,7 +15,7 @@ CREATE TABLE users (
     email VARCHAR(255) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     name VARCHAR(255) NOT NULL,
-    role VARCHAR(50) NOT NULL DEFAULT 'candidate', -- admin, recruiter, candidate
+    role VARCHAR(50) NOT NULL DEFAULT 'candidate', -- admin, hr, candidate, technical_expert
     company VARCHAR(255),
     avatar_url TEXT,
     is_active BOOLEAN DEFAULT TRUE,
@@ -257,11 +257,11 @@ VALUES (
     'admin'
 ) ON CONFLICT (email) DO NOTHING;
 
--- Create default recruiter
+-- Create default hr user
 INSERT INTO users (email, password_hash, name, role) 
 VALUES (
-    'recruiter@company.com', 
-    crypt('recruiter123', gen_salt('bf')), 
-    'John Recruiter', 
-    'recruiter'
+    'hr@company.com', 
+    crypt('hr123456', gen_salt('bf')), 
+    'HR Manager', 
+    'hr'
 ) ON CONFLICT (email) DO NOTHING;
