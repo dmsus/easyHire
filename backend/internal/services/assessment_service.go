@@ -31,6 +31,7 @@ type AssessmentService interface {
 type assessmentService struct {
     assessmentRepo repository.AssessmentRepository
     questionRepo   repository.QuestionRepository
+    emailService   *EmailService
 }
 
 func NewAssessmentService(
@@ -40,6 +41,7 @@ func NewAssessmentService(
     return &assessmentService{
         assessmentRepo: assessmentRepo,
         questionRepo:   questionRepo,
+        emailService:   NewEmailService(),
     }
 }
 
@@ -99,7 +101,7 @@ func (s *assessmentService) UpdateAssessment(ctx context.Context, id string, req
         assessment.TimeLimit = *req.TimeLimit
     }
     
-    // Save changes
+    // Save updated assessment
     if err := s.assessmentRepo.UpdateAssessment(ctx, assessment); err != nil {
         return nil, fmt.Errorf("failed to update assessment: %w", err)
     }
@@ -131,6 +133,14 @@ func (s *assessmentService) InviteCandidate(ctx context.Context, assessmentID, e
     
     if err := s.assessmentRepo.CreateInvitation(ctx, invitation); err != nil {
         return nil, fmt.Errorf("failed to create invitation: %w", err)
+    }
+    
+    // ✅ EMAIL ОТПРАВКА ДОБАВЛЕНА
+    // Получаем оценку для отправки email
+    assessment, err := s.assessmentRepo.GetAssessmentByID(ctx, assessmentID)
+    if err == nil {
+        // Отправляем email приглашение
+        s.emailService.SendInvitation(email, token, assessment.Title)
     }
     
     return invitation, nil
