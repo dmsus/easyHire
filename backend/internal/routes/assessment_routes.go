@@ -1,64 +1,44 @@
 package routes
 
 import (
-	"backend/internal/handlers"
-	"backend/internal/middleware"
+	"github.com/easyhire/backend/internal/handlers"
+	"github.com/easyhire/backend/internal/middleware"
+	"github.com/easyhire/internal/pkg/auth"
 	"github.com/gin-gonic/gin"
 )
 
-func SetupAssessmentRoutes(router *gin.RouterGroup, assessmentHandler *handlers.AssessmentHandler) {
-	// Assessment management routes
+func SetupAssessmentRoutes(router *gin.RouterGroup, jwtService *auth.JWTService, assessmentHandler *handlers.AssessmentHandler) {
+	// All assessment routes require JWT auth
 	assessments := router.Group("/assessments")
-	assessments.Use(middleware.AuthMiddleware())
+	assessments.Use(middleware.AuthMiddleware(jwtService))
 	{
-		// CRUD operations
-		assessments.POST("", assessmentHandler.CreateAssessment)
-		assessments.GET("", assessmentHandler.ListAssessments)
+		// CRUD
+		assessments.POST("", middleware.HRorAdmin(), assessmentHandler.CreateAssessment)
+		assessments.GET("", middleware.HRorAdmin(), assessmentHandler.ListAssessments)
 		assessments.GET("/:id", assessmentHandler.GetAssessment)
-		assessments.PUT("/:id", middleware.RequireRole("hr", "admin"), assessmentHandler.UpdateAssessment)
-		assessments.DELETE("/:id", middleware.RequireRole("hr", "admin"), assessmentHandler.DeleteAssessment)
-		
-		// Assessment actions
-		assessments.POST("/:id/publish", middleware.RequireRole("hr", "admin"), assessmentHandler.PublishAssessment)
-		assessments.POST("/:id/generate-questions", middleware.RequireRole("hr", "admin"), assessmentHandler.GenerateQuestions)
-		
-		// Candidate invitations
-		assessments.POST("/:id/invite", middleware.RequireRole("hr", "admin"), assessmentHandler.InviteCandidates)
-		assessments.POST("/:id/bulk-invite", middleware.RequireRole("hr", "admin"), assessmentHandler.BulkInvite)
-		assessments.GET("/:id/invitations", middleware.RequireRole("hr", "admin"), assessmentHandler.ListInvitations)
-		
-		// Start assessment (for candidates)
-		assessments.POST("/:id/start", assessmentHandler.StartAssessment)
+		assessments.PUT("/:id", middleware.HRorAdmin(), assessmentHandler.UpdateAssessment)
+		assessments.DELETE("/:id", middleware.HRorAdmin(), assessmentHandler.DeleteAssessment)
+
+		// Invitations
+		assessments.POST("/:id/invite", middleware.HRorAdmin(), assessmentHandler.InviteCandidate)
+		assessments.POST("/:id/bulk-invite", middleware.HRorAdmin(), assessmentHandler.BulkInvite)
+
+		// Candidate starts session for assessment
+		assessments.POST("/:id/start", assessmentHandler.StartSession)
 	}
-	
-	// Session management routes
+
+	// Session routes require JWT auth
 	sessions := router.Group("/sessions")
-	sessions.Use(middleware.AuthMiddleware())
+	sessions.Use(middleware.AuthMiddleware(jwtService))
 	{
-		sessions.GET("/:id", assessmentHandler.GetSession)
-		sessions.GET("/:id/progress", assessmentHandler.GetSessionProgress)
-		sessions.POST("/:id/pause", assessmentHandler.PauseSession)
-		sessions.POST("/:id/resume", assessmentHandler.ResumeSession)
-		sessions.POST("/:id/complete", assessmentHandler.CompleteAssessment)
-		
-		// Answer submission
-		sessions.POST("/:session_id/questions/:question_id/answer", assessmentHandler.SubmitAnswer)
+		sessions.GET("/:session_id", assessmentHandler.GetSession)
+		sessions.POST("/:session_id/answers", assessmentHandler.SubmitAnswer)
+		sessions.POST("/:session_id/complete", assessmentHandler.CompleteSession)
 	}
-	
-	// Results routes
-	results := router.Group("/results")
-	results.Use(middleware.AuthMiddleware())
-	{
-		results.GET("/:session_id", assessmentHandler.GetResult)
-	}
-	
-	// Invitation routes (some public, some protected)
+
+	// Invitation token lookup (public)
 	invitations := router.Group("/invitations")
 	{
-		// Public route for validating invitations
-		invitations.GET("/:token", assessmentHandler.ValidateInvitation)
-		
-		// Protected route for accepting invitations
-		invitations.POST("/:token/accept", middleware.AuthMiddleware(), assessmentHandler.AcceptInvitation)
+		invitations.GET("/:token", assessmentHandler.GetInvitation)
 	}
 }

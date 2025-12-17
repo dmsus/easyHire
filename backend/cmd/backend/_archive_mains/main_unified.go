@@ -12,13 +12,11 @@ import (
 
 	"github.com/easyhire/backend/internal/handlers"
 	"github.com/easyhire/backend/internal/middleware"
+	"github.com/easyhire/backend/internal/repository"
+	"github.com/easyhire/backend/internal/services"
 	"github.com/easyhire/backend/internal/pkg/config"
 	"github.com/easyhire/backend/internal/pkg/logger"
-	"github.com/easyhire/backend/internal/repository"
-	"github.com/easyhire/backend/internal/routes"
-	"github.com/easyhire/backend/internal/services"
 	"github.com/easyhire/backend/pkg/database"
-	"github.com/easyhire/internal/pkg/auth"
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/redis/go-redis/v9"
@@ -60,11 +58,21 @@ func main() {
 			}
 		}()
 		log.Info().Msg("✅ Database connection established")
+		
+		// Run migrations if enabled
+		if cfg.Database.AutoMigrate {
+			log.Info().Msg("🔄 Running database migrations...")
+			if err := database.RunMigrations(db.DB); err != nil {
+				log.Error().Err(err).Msg("Failed to run migrations")
+			} else {
+				log.Info().Msg("✅ Database migrations completed")
+			}
+		}
 	} else {
-		log.Fatal().Msg("❌ Database configuration missing. Assessment engine requires DB.")
+		log.Warn().Msg("⚠️ Database configuration missing, running without database")
 	}
 
-	// Initialize Redis (optional)
+	// Initialize Redis
 	var redisClient *redis.Client
 	if cfg.Redis.Host != "" {
 		redisClient = redis.NewClient(&redis.Options{
@@ -74,6 +82,7 @@ func main() {
 			PoolSize: cfg.Redis.PoolSize,
 		})
 
+		// Test Redis connection
 		if _, err := redisClient.Ping(context.Background()).Result(); err != nil {
 			log.Warn().Err(err).Msg("Redis connection failed, running without cache")
 			redisClient = nil
@@ -83,9 +92,12 @@ func main() {
 	} else {
 		log.Warn().Msg("⚠️ Redis configuration missing, running without cache")
 	}
-
-	// Initialize JWT service (IMPORTANT: must match middleware imports)
-	jwtCfg := &auth.JWTConfig{
+	// =============================================
+	// ИНИЦИАЛИЗАЦИЯ СЕРВИСОВ AUTH + ASSESSMENT
+	// =============================================
+	
+	// Initialize JWT service
+	jwtCfg := &config.JWTConfig{
 		JWTPrivateKey:      cfg.Security.JWTPrivateKey,
 		JWTPublicKey:       cfg.Security.JWTPublicKey,
 		JWTSecret:          cfg.Security.JWTSecret,
@@ -93,27 +105,45 @@ func main() {
 		RefreshTokenExpiry: cfg.Security.RefreshTokenExpiry,
 	}
 
-	jwtService, err := auth.NewJWTService(jwtCfg)
-	if err != nil {
-		log.Fatal().Err(err).Msg("Failed to initialize JWT service")
+	jwtService := services.NewJWTService(jwtCfg)
+	if jwtService == nil {
+		log.Fatal().Msg("Failed to initialize JWT service")
 	}
 
 	// Initialize password service
-	passwordService := auth.NewPasswordService()
+	passwordService := services.NewPasswordService()
 
-	// ===== Init handlers/services for Task #9 (Assessment Engine) =====
+	// Initialize repositories
+	userRepo := repository.NewUserRepository(db.DB)
 	assessmentRepo := repository.NewAssessmentRepository(db.DB)
 	questionRepo := repository.NewQuestionRepository(db.DB)
 
-	// ✅ FIX: pass db.DB as 3rd argument (NewAssessmentService expects *gorm.DB)
-	assessmentService := services.NewAssessmentService(assessmentRepo, questionRepo, db.DB)
+	// Initialize services
+	scoringService := services.NewScoringService()
+	emailService := services.NewEmailService()
+	
+	// Auth service
+	authService := services.NewAuthService(userRepo, jwtService, passwordService)
+	
+	// Assessment service with email integration
+	assessmentService := services.NewAssessmentService(
+		assessmentRepo,
+		questionRepo,
+		userRepo,
+		scoringService,
+		emailService,
+	)
 
+	// Initialize handlers
+	healthHandler := handlers.NewHealthHandler(db, redisClient)
+	authHandler := handlers.NewAuthHandler(authService)
 	assessmentHandler := handlers.NewAssessmentHandler(assessmentService)
 
-	// ===== Init other handlers =====
-	healthHandler := handlers.NewHealthHandler(db, redisClient)
-	authHandler := handlers.NewAuthHandler(db, jwtService, passwordService)
-
+	log.Info().Msg("✅ All services initialized successfully")
+	// =============================================
+	// НАСТРОЙКА GIN И РОУТОВ
+	// =============================================
+	
 	// Set Gin mode
 	gin.SetMode(cfg.Server.Mode)
 
@@ -140,25 +170,97 @@ func main() {
 	// API v1 routes group
 	apiV1 := router.Group("/api/v1")
 	{
-		// Auth routes
+		// ========== PUBLIC ROUTES (No Auth) ==========
+		// Public auth routes
 		authGroup := apiV1.Group("/auth")
 		{
 			authGroup.POST("/register", authHandler.Register)
 			authGroup.POST("/login", authHandler.Login)
 			authGroup.POST("/refresh", authHandler.Refresh)
+		}
 
-			protectedAuth := authGroup.Group("")
-			protectedAuth.Use(middleware.AuthMiddleware(jwtService))
+		// Public assessment invitation routes
+		public := apiV1.Group("/public")
+		{
+			public.GET("/assessments/:invite_code", assessmentHandler.GetAssessmentByInviteToken)
+			public.POST("/assessments/:invite_code/start", assessmentHandler.StartAssessment)
+		}
+
+		// ========== PROTECTED ROUTES (Require Auth) ==========
+		protected := apiV1.Group("")
+		protected.Use(middleware.AuthMiddleware(jwtService))
+		{
+			// Auth routes (protected)
+			protectedAuth := protected.Group("/auth")
 			{
 				protectedAuth.GET("/me", authHandler.GetProfile)
 				protectedAuth.POST("/logout", authHandler.Logout)
 			}
+
+			// Assessments routes (HR and Admin only)
+			assessments := protected.Group("/assessments")
+			assessments.Use(middleware.HRorAdmin())
+			{
+				assessments.GET("", assessmentHandler.GetAssessments)
+				assessments.POST("", assessmentHandler.CreateAssessment)
+				assessments.GET("/:id", assessmentHandler.GetAssessmentByID)
+				assessments.PUT("/:id", assessmentHandler.UpdateAssessment)
+				assessments.DELETE("/:id", assessmentHandler.DeleteAssessment)
+				assessments.POST("/:id/invite", assessmentHandler.InviteCandidate)
+				assessments.POST("/:id/invite/bulk", assessmentHandler.BulkInviteCandidates)
+			}
+
+			// Session management routes
+			sessions := protected.Group("/sessions")
+			{
+				sessions.POST("/:id/answers", assessmentHandler.SubmitAnswer)
+				sessions.POST("/:id/complete", assessmentHandler.CompleteAssessment)
+				sessions.GET("/:id", assessmentHandler.GetSession)
+			}
+
+			// Questions routes (HR, Admin, and Technical Experts)
+			questions := protected.Group("/questions")
+			questions.Use(middleware.RoleMiddleware("hr", "admin", "technical_expert"))
+			{
+				questions.GET("", func(c *gin.Context) {
+					c.JSON(http.StatusOK, gin.H{"message": "List questions - TODO"})
+				})
+				questions.POST("", func(c *gin.Context) {
+					c.JSON(http.StatusOK, gin.H{"message": "Create question - TODO"})
+				})
+				questions.GET("/:id", func(c *gin.Context) {
+					c.JSON(http.StatusOK, gin.H{"message": "Get question - TODO"})
+				})
+			}
+
+			// Results routes (accessible by all authenticated users)
+			results := protected.Group("/results")
+			{
+				results.GET("", func(c *gin.Context) {
+					c.JSON(http.StatusOK, gin.H{"message": "List results - TODO"})
+				})
+				results.GET("/:id", func(c *gin.Context) {
+					c.JSON(http.StatusOK, gin.H{"message": "Get result - TODO"})
+				})
+			}
+
+			// Admin-only routes
+			admin := protected.Group("/admin")
+			admin.Use(middleware.AdminOnly())
+			{
+				admin.GET("/users", func(c *gin.Context) {
+					c.JSON(http.StatusOK, gin.H{"message": "List all users - TODO"})
+				})
+				admin.GET("/stats", func(c *gin.Context) {
+					c.JSON(http.StatusOK, gin.H{"message": "Admin statistics - TODO"})
+				})
+			}
 		}
-
-		// Task #9 routes (Assessment Engine)
-		routes.SetupAssessmentRoutes(apiV1, jwtService, assessmentHandler)
 	}
-
+	// =============================================
+	// ЗАПУСК СЕРВЕРА И GRACEFUL SHUTDOWN
+	// =============================================
+	
 	// Start server
 	server := &http.Server{
 		Addr:         fmt.Sprintf("%s:%d", cfg.Server.Host, cfg.Server.Port),
