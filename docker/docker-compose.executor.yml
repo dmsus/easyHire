@@ -1,0 +1,18 @@
+services:
+  executor:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.executor
+    container_name: easyhire-executor
+    ports:
+      - "8091:8090"
+    environment:
+      - PORT=8090
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - executor_work:/workspaces
+    restart: unless-stopped
+
+volumes:
+  executor_work:
+    name: easyhire_executor_work
